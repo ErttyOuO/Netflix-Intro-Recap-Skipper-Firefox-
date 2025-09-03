@@ -1,0 +1,5 @@
+:root { --popup-min-width: 220px; --popup-max-width: 360px; }
+body { margin: 0; padding: 10px 12px; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial, "Apple Color Emoji", "Segoe UI Emoji"; font-size: 12px; line-height: 1.35; min-width: var(--popup-min-width); max-width: var(--popup-max-width); overflow-wrap: anywhere; }
+h1 { margin: 0 0 6px; font-size: 13px; }
+ul { margin: 4px 0 8px 18px; }
+.credit { margin: 6px 0 0; color: color-mix(in oklab, currentColor 65%, transparent); font-size: 11px; }
