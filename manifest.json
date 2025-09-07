@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "default_locale": "en",
-  "name": "__MSG_extension_name__",
-  "description": "__MSG_extension_description__",
+  "default_locale": "zh_TW",
+  "name":  "Netflix 片頭片尾自動跳過（Firefox）",
+  "description":"一個自動跳過 Netflix 片頭與回顧的 Firefox 擴充功能，本專案原為SafariNflxAutoSkip改寫而成。",
   "version": "1.0.0",
   "icons": {
     "48": "images/icon-48.png",
@@ -37,4 +37,3 @@
     }
   }
 }
-
