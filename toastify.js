@@ -66,7 +66,7 @@
       if (this.options.node && this.options.node.nodeType === Node.ELEMENT_NODE) {
         divElement.appendChild(this.options.node)
       } else {
-        if (this.options.escapeMarkup) { divElement.innerText = this.options.text; } else { divElement.innerHTML = this.options.text; }
+  if (this.options.escapeMarkup) { divElement.innerText = this.options.text; } else { divElement.textContent = this.options.text; }
         if (this.options.avatar !== "") {
           var avatarElement = document.createElement("img");
           avatarElement.src = this.options.avatar;
@@ -83,7 +83,7 @@
         closeElement.type = "button";
         closeElement.setAttribute("aria-label", "Close");
         closeElement.className = "toast-close";
-        closeElement.innerHTML = "&#10006;";
+  closeElement.textContent = "✖";
         closeElement.addEventListener("click", function (event) {
           event.stopPropagation();
           this.removeElement(this.toastElement);
