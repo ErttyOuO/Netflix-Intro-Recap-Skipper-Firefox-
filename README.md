@@ -24,7 +24,8 @@
 - _locales/en/messages.json
 - images/ (請從 Resources/images 複製圖檔)
 
-## 下載後本地套用方法(每次開啟瀏覽器需重新套用)
+## 下載後本地套用方法
+(每次開啟瀏覽器需重新套用)
 1. 打開 Firefox → `about:debugging#/runtime/this-firefox`
 2. Load Temporary Add-on → 選擇此資料夾下的 `manifest.json`
 3. 到 Netflix 影片頁確認是否自動 Skip Intro/Recap
@@ -34,5 +35,6 @@
 若 Netflix 沒有顯示「跳過」按鈕，插件無法作用
 Netflix 若改版 UI（例如按鈕名稱或結構變動），插件可能需更新。
 僅支援 Firefox，其他瀏覽器請參考對應版本。
+
 
 
