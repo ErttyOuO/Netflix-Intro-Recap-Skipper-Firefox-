@@ -4,23 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="popup.css">
-  <script type="module" src="popup.js"></script>
 </head>
 <body>
-  <h1>Netflix Intro &amp; Recap Skipper</h1>
-  <p>功能：</p>
-  <ul>
-    <li>自動點擊「Skip Intro」與「Skip Recap」</li>
-    <li>顯示提示（僅於 netflix.com 生效）</li>
-  </ul>
-  <hr />
-  <p class="credit">
-    原始作者：
-    <a href="https://github.com/JohnnyTseng" target="_blank" rel="noopener noreferrer">JohnnyTseng</a><br />
-    Safari 版本原始碼：
-    <a href="https://github.com/JohnnyTseng/SafariNflxAutoSkip" target="_blank" rel="noopener noreferrer">SafariNflxAutoSkip</a><br />
-    Firefox 版本原始碼：
-    <a href="https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-/" target="_blank" rel="noopener noreferrer">Netflix Intro & Recap Skipper</a> by ErttyOuO
-  </p>
+  <div class="popup-container">
+    <header class="header">
+      <img src="images/icon-48.png" alt="Netflix Skipper" class="logo">
+      <h1>Netflix Skipper</h1>
+    </header>
+    
+    <section class="settings">
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="setting-icon">🍿</span>
+          <span class="setting-label">自動跳過片頭</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="skipIntro" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="setting-icon">🕵️</span>
+          <span class="setting-label">自動跳過前情提要</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="skipRecap" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="setting-icon">📺</span>
+          <span class="setting-label">自動播放下一集</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="skipNextEpisode" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+    
+    <footer class="footer">
+      <p class="credit">
+        原作者：<a href="https://github.com/JohnnyTseng" target="_blank">JohnnyTseng</a><br>
+        Firefox 版本：<a href="https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-" target="_blank">ErttyOuO</a>
+      </p>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
 </body>
 </html>

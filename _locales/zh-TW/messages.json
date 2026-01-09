@@ -1,0 +1,8 @@
+{
+    "extension_name": {
+        "message": "Netflix 片頭片尾自動跳過"
+    },
+    "extension_description": {
+        "message": "自動點擊 Netflix 的「跳過片頭」、「跳過前情提要」和「下一集」按鈕。"
+    }
+}
