@@ -30,26 +30,6 @@ browser.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Skip button definitions - only using verified, specific selectors
-const targets = [
-  {
-    key: 'skipIntro',
-    selector: 'button[data-uia="player-skip-intro"]',
-    message: '已略過開場！🍿'
-  },
-  {
-    key: 'skipRecap',
-    selector: 'button[data-uia="player-skip-recap"]',
-    message: '已略過前情提要！🕵️‍♂️'
-  },
-  // Next Episode button - appears during end credits countdown
-  {
-    key: 'skipNextEpisode',
-    selector: 'button[data-uia="next-episode-seamless-button"]',
-    message: '已自動播放下一集！📺'
-  }
-];
-
 // Track recently clicked button types to avoid duplicate clicks
 const recentlyClicked = new Set();
 
@@ -63,20 +43,72 @@ function isVisible(elem) {
     elem.offsetParent !== null;
 }
 
+// Find button by selector
+function findButtonBySelector(selector) {
+  return document.querySelector(selector);
+}
+
+// Find "Next Episode" button by looking for buttons with matching text
+function findNextEpisodeButton() {
+  // First try the standard data-uia selectors
+  const selectors = [
+    'button[data-uia="next-episode-seamless-button"]',
+    'button[data-uia="next-episode-seamless-button-draining"]',
+    '[data-uia="next-episode-seamless-button"]',
+    '[data-uia="next-episode-seamless-button-draining"]'
+  ];
+
+  for (const selector of selectors) {
+    const btn = document.querySelector(selector);
+    if (btn && isVisible(btn)) return btn;
+  }
+
+  // If not found, search for button containing "下一集" or "Next Episode" text
+  // Look in the post-play area (credits screen)
+  const postPlayContainer = document.querySelector('.watch-video--evidence-overlay, .PostPlay, [data-uia="watch-video-evidence"]');
+  if (postPlayContainer) {
+    const buttons = postPlayContainer.querySelectorAll('button');
+    for (const btn of buttons) {
+      const text = btn.textContent || btn.innerText || '';
+      if ((text.includes('下一集') || text.toLowerCase().includes('next episode')) && isVisible(btn)) {
+        return btn;
+      }
+    }
+  }
+
+  return null;
+}
+
+// Skip button definitions
+const buttonConfig = {
+  skipIntro: {
+    message: '已略過開場！🍿',
+    find: () => findButtonBySelector('button[data-uia="player-skip-intro"]')
+  },
+  skipRecap: {
+    message: '已略過前情提要！🕵️‍♂️',
+    find: () => findButtonBySelector('button[data-uia="player-skip-recap"]')
+  },
+  skipNextEpisode: {
+    message: '已自動播放下一集！📺',
+    find: findNextEpisodeButton
+  }
+};
+
 const skipButtons = () => {
-  targets.forEach(({ key, selector, message }) => {
+  Object.entries(buttonConfig).forEach(([key, config]) => {
     // Check if this feature is enabled
     if (!settings[key]) return;
 
     // Skip if this button type was recently clicked
     if (recentlyClicked.has(key)) return;
 
-    const btn = document.querySelector(selector);
+    const btn = config.find();
     // Only click if button exists AND is visible
     if (btn && isVisible(btn)) {
       btn.click();
-      console.log(`[Netflix Skipper] ⏩ Clicked: ${selector}`);
-      showToast(message);
+      console.log(`[Netflix Skipper] ⏩ Clicked: ${key}`);
+      showToast(config.message);
 
       // Prevent duplicate clicks for this button TYPE for 5 seconds
       recentlyClicked.add(key);
@@ -86,7 +118,7 @@ const skipButtons = () => {
 };
 
 // Run check periodically and on DOM changes
-setInterval(skipButtons, 1000);
+setInterval(skipButtons, 500); // Check every 500ms for faster response
 const observer = new MutationObserver(skipButtons);
 observer.observe(document.body, { childList: true, subtree: true });
 
