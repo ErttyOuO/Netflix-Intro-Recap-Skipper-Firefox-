@@ -3,10 +3,12 @@
   --netflix-red-dark: #B20710;
   --bg-dark: #141414;
   --bg-card: #1f1f1f;
+  --bg-card-hover: #292929;
   --text-primary: #ffffff;
   --text-secondary: #a3a3a3;
-  --border-color: #333;
-  --toggle-off: #555;
+  --border-color: #333333;
+  --toggle-off: #555555;
+  --status-off: #737373;
 }
 
 * {
@@ -21,20 +23,19 @@ body {
   line-height: 1.5;
   background: var(--bg-dark);
   color: var(--text-primary);
-  min-width: 280px;
-  max-width: 320px;
+  min-width: 300px;
+  max-width: 340px;
 }
 
 .popup-container {
   padding: 16px;
 }
 
-/* Header */
 .header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
 }
@@ -47,14 +48,56 @@ body {
 
 .header h1 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   background: linear-gradient(135deg, var(--netflix-red), #ff6b6b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Settings Section */
+.version {
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.status-card {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--status-off);
+}
+
+.status-dot.active {
+  background: var(--netflix-red);
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.15);
+}
+
+.session-count {
+  min-height: 16px;
+  margin-top: 4px;
+  padding-left: 16px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
 .settings {
   display: flex;
   flex-direction: column;
@@ -66,24 +109,37 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 10px 12px;
   background: var(--bg-card);
   border-radius: 8px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .setting-item:hover {
-  background: #292929;
+  background: var(--bg-card-hover);
+}
+
+.setting-item.saved {
+  box-shadow: inset 0 0 0 1px rgba(229, 9, 20, 0.55);
 }
 
 .setting-info {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .setting-icon {
   font-size: 16px;
+  flex: 0 0 auto;
+}
+
+.setting-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .setting-label {
@@ -91,7 +147,13 @@ body {
   font-weight: 500;
 }
 
-/* Toggle Switch */
+.setting-note {
+  margin-top: 1px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .toggle {
   position: relative;
   display: inline-block;
@@ -109,24 +171,21 @@ body {
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: var(--toggle-off);
-  transition: 0.3s ease;
+  transition: 0.2s ease;
   border-radius: 24px;
 }
 
-.slider:before {
+.slider::before {
   position: absolute;
-  content: "";
+  content: '';
   height: 18px;
   width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.3s ease;
+  transition: 0.2s ease;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -135,15 +194,14 @@ body {
   background: linear-gradient(135deg, var(--netflix-red), var(--netflix-red-dark));
 }
 
-.toggle input:checked + .slider:before {
+.toggle input:checked + .slider::before {
   transform: translateX(20px);
 }
 
-.toggle input:focus + .slider {
-  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.3);
+.toggle input:focus-visible + .slider {
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.35);
 }
 
-/* Footer */
 .footer {
   padding-top: 12px;
   border-top: 1px solid var(--border-color);
@@ -161,7 +219,8 @@ body {
   transition: opacity 0.2s;
 }
 
-.credit a:hover {
+.credit a:hover,
+.credit a:focus-visible {
   opacity: 0.8;
   text-decoration: underline;
 }

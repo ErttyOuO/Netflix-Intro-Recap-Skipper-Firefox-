@@ -1,4 +1,79 @@
 {
-  "extension_name": { "message": "Netflix Intro & Recap Skipper" },
-  "extension_description": { "message": "Automatically clicks \"Skip Intro\" and \"Skip Recap\" on Netflix." }
+  "extension_name": {
+    "message": "Netflix Intro & Recap Skipper"
+  },
+  "extension_description": {
+    "message": "Automatically handles Netflix Skip Intro, Skip Recap, and Next Episode controls with in-player quick settings, optional Continue Playing support, and no viewing-data collection."
+  },
+  "popup_title": {
+    "message": "Netflix Skipper"
+  },
+  "status_checking": {
+    "message": "Checking the current page…"
+  },
+  "status_active": {
+    "message": "Monitoring the Netflix player"
+  },
+  "status_inactive": {
+    "message": "This Netflix page is not in playback mode"
+  },
+  "status_unavailable": {
+    "message": "Playback status is available on Netflix pages only"
+  },
+  "session_count": {
+    "message": "$COUNT$ actions handled on this page",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "setting_skip_intro": {
+    "message": "Auto-skip intro"
+  },
+  "setting_skip_recap": {
+    "message": "Auto-skip recap"
+  },
+  "setting_next_episode": {
+    "message": "Auto-play next episode"
+  },
+  "setting_still_watching": {
+    "message": "Auto-continue playback"
+  },
+  "setting_still_watching_note": {
+    "message": "Handles the “Still watching?” prompt; off by default"
+  },
+  "setting_toast": {
+    "message": "Show skip notifications"
+  },
+  "toast_intro": {
+    "message": "Intro skipped! 🍿"
+  },
+  "toast_recap": {
+    "message": "Recap skipped! 🕵️"
+  },
+  "toast_next_episode": {
+    "message": "Next episode started! 📺"
+  },
+  "toast_still_watching": {
+    "message": "Playback continued! ▶️"
+  },
+  "credit_original": {
+    "message": "Original author"
+  },
+  "credit_firefox": {
+    "message": "Firefox version"
+  },
+  "player_settings_button": {
+    "message": "Netflix Skipper quick settings"
+  },
+  "player_settings_title": {
+    "message": "Netflix Skipper"
+  },
+  "player_settings_subtitle": {
+    "message": "Adjust auto-skip behavior while watching"
+  },
+  "player_settings_close": {
+    "message": "Close quick settings"
+  }
 }

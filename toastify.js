@@ -1,3 +1,9 @@
+/*
+ * Toastify JS 1.12.0
+ * Upstream: https://github.com/apvarun/toastify-js
+ * License: MIT
+ * Bundled locally; no remote code loading.
+ */
 /* Toastify JS - copied from Resources (unminified) */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) {
