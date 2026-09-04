@@ -1,391 +1,334 @@
-# Netflix Intro & Recap Skipper
+# Netflix + 動畫瘋自動播放助手 v2.0.0
 
-<p align="center">
-  <strong>讓 Netflix 的片頭、前情提要與下一集切換更自動，也能直接在播放器裡隨時調整。</strong>
-</p>
+> 一個 Firefox 擴充功能，同時支援 Netflix 自動跳過與巴哈姆特動畫瘋的分級自動同意、片頭學習與視覺辨識自動跳過。
 
-<p align="center">
-  <a href="https://addons.mozilla.org/zh-TW/firefox/addon/netflix%E8%B7%B3%E9%81%8E%E7%89%87%E9%A0%AD%E7%89%87%E5%B0%BE/">
-    <img src="https://img.shields.io/badge/Firefox_Add--ons-立即安裝-FF7139?logo=firefox-browser&logoColor=white" alt="Firefox Add-ons">
-  </a>
-  <a href="https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-/releases">
-    <img src="https://img.shields.io/badge/Vivaldi_%2F_Chromium-GitHub_Releases-24292F?logo=github&logoColor=white" alt="Vivaldi / Chromium Releases">
-  </a>
-  <img src="https://img.shields.io/badge/version-v1.2.1-E50914" alt="Version 1.2.1">
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
-</p>
+![Firefox](https://img.shields.io/badge/Firefox-140%2B-FF7139?logo=firefoxbrowser&logoColor=white)
+![Version](https://img.shields.io/badge/version-2.0.0-2f6cf4)
+![Data Collection](https://img.shields.io/badge/data%20collection-none-4caf50)
+![License](https://img.shields.io/badge/Bahamut%20module-MIT-blue)
+
+本專案以既有的 **Netflix Intro / Recap Skipper Firefox v1.2.1** 為主幹，保留原本 GitHub / Firefox 發布線與 Netflix Player Quick Settings，並將 **動畫瘋自動播放助手 v1.4.0** 的完整核心功能模組化整合進同一個擴充功能。
 
 ---
 
-## 簡介
+## 支援網站
 
-**Netflix Intro & Recap Skipper** 是一個輕量化的 Netflix 自動跳過擴充功能。
+| 平台 | 網站 | 載入模組 |
+| --- | --- | --- |
+| Netflix | `https://www.netflix.com/*` | `sites/netflix/*` |
+| 巴哈姆特動畫瘋 | `https://ani.gamer.com.tw/*` | `sites/bahamut/*` |
 
-它可以自動處理 Netflix 播放器中的：
-
-- 🍿 **跳過片頭 / Skip Intro**
-- 🕵️ **跳過前情提要 / Skip Recap**
-- 📺 **自動播放下一集 / Next Episode**
-- ▶️ **自動繼續播放 / Still Watching**（預設關閉）
-- 🔔 **跳過提示通知**
-
-除了瀏覽器工具列中的 Popup，v1.2.x 也加入了 **Player Quick Settings**，可以直接在 Netflix 播放畫面中調整功能，不需要離開影片或特別打開瀏覽器擴充功能選單。
+兩個網站的 Content Script **完全分離**：Netflix 頁面不會執行動畫瘋的影格取樣器；動畫瘋頁面也不會執行 Netflix 的播放器 DOM 偵測。
 
 ---
 
-## 安裝
+## Netflix 功能
 
-### Firefox
+v2.0.0 完整保留 Netflix v1.2.1 的功能與可靠性修正：
 
-Firefox 版本已正式上架 Mozilla Firefox Add-ons：
+- 🍿 自動跳過片頭。
+- 🕵️ 自動跳過前情提要。
+- 📺 自動播放下一集。
+- ▶️ 可選擇自動處理「仍在觀看嗎 / Continue Playing」，預設關閉。
+- 🔔 可開關跳過提示。
+- Netflix `/watch/` 播放器內的 **Player Quick Settings**。
+- Popup 與播放器內設定共用同一份 `browser.storage.local`。
+- Netflix SPA 導航與控制列重建處理。
+- Next Episode hidden-parent / Post-play 偶發漏按修正。
+- 每個自動操作都有 cooldown，避免 Netflix 重建 DOM 時重複觸發。
+- 不使用全頁 500ms polling，也不以模糊文字搜尋下一集按鈕。
 
-**[前往 Firefox Add-ons 安裝](https://addons.mozilla.org/zh-TW/firefox/addon/netflix%E8%B7%B3%E9%81%8E%E7%89%87%E9%A0%AD%E7%89%87%E5%B0%BE/)**
+### Netflix Player Quick Settings
 
-安裝完成後開啟 Netflix 即可使用。
-
-### Vivaldi / Chromium
-
-Vivaldi / Chromium 版本由 GitHub Releases 提供：
-
-**[前往 GitHub Releases](https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-/releases)**
-
-若下載的是手動安裝版：
-
-1. 下載 Release 中標示為 **Chromium / Vivaldi** 的版本。
-2. 解壓縮 ZIP。
-3. 開啟瀏覽器的擴充功能管理頁。
-4. 開啟 **開發人員模式 / Developer mode**。
-5. 選擇 **載入未封裝項目 / Load unpacked**。
-6. 指向剛才解壓縮的擴充功能資料夾。
-
-> Chromium 系瀏覽器的實際選單名稱可能會依瀏覽器版本略有不同。
-
----
-
-## 功能
-
-| 功能 | 預設 | 說明 |
-|---|:---:|---|
-| 🍿 自動跳過片頭 | ✅ | Netflix 顯示 Skip Intro 時自動處理 |
-| 🕵️ 自動跳過前情提要 | ✅ | Netflix 顯示 Skip Recap 時自動處理 |
-| 📺 自動播放下一集 | ✅ | Next Episode 可使用時自動進入下一集 |
-| ▶️ 自動繼續播放 | ❌ | 處理「仍在觀看嗎 / Still Watching」提示 |
-| 🔔 顯示跳過提示 | ✅ | 自動處理成功時顯示簡短提示 |
-
-所有設定會儲存在瀏覽器本機。
-
----
-
-## Player Quick Settings
-
-v1.2.x 起，可以直接在 Netflix 播放器內調整 Skipper。
-
-播放器中的快速設定與瀏覽器 Popup 使用 **同一份設定**：
+播放 Netflix 時，不必特別打開 Firefox 工具列 Popup，可以直接從播放器內調整：
 
 ```text
-Netflix Skipper
-
-🍿 自動跳過片頭              ON
-🕵️ 自動跳過前情提要          ON
-📺 自動播放下一集            ON
-
-▶️ 自動繼續播放              OFF
-   處理「仍在觀看嗎」提示
-
-🔔 顯示跳過提示              ON
+🍿 自動跳過片頭
+🕵️ 自動跳過前情提要
+📺 自動播放下一集
+▶️ 自動繼續播放
+🔔 顯示跳過提示
 ```
 
-因此：
-
-```text
-在 Netflix 播放器關閉「自動跳過片頭」
-                    ↓
-Firefox / Chromium Popup 也會同步成 OFF
-                    ↓
-核心功能立即套用新設定
-```
-
-反方向修改也會同步。
-
-### UI 設計
-
-Player Quick Settings：
-
-- 只在 Netflix `/watch/...` 播放頁使用。
-- 使用 Shadow DOM 隔離樣式，降低 Netflix CSS 改版造成互相干擾的機率。
-- Netflix SPA 換集或重新建立播放器控制項時，不會故意建立多份設定面板。
-- 不需要新增額外網站權限。
-- 不會因為操作設定面板而刻意改變字幕、音量、畫質或播放速度。
+面板使用 Shadow DOM 隔離樣式，降低 Netflix CSS 改版造成 UI 污染的風險。
 
 ---
 
-## v1.2.1
+## 動畫瘋功能
 
-### 修正 Next Episode 偶發漏按
+動畫瘋模組完整保留 v1.4.0 功能與資料格式。
 
-Netflix 有時會提早建立「下一集」按鈕，但先把它放在隱藏的 Post-play 容器中。
+### 1. 分級提示自動同意
 
-舊版可能發生：
+- 偵測動畫瘋分級遮罩。
+- 功能開啟時，自動按下網站原本的「同意」按鈕。
+- 支援動態換集與局部 DOM 更新。
+- 成功自動確認後顯示短暫提示。
 
-```text
-Next Episode 按鈕已經存在
-        ↓
-父層目前仍然隱藏
-        ↓
-插件第一次判斷為不可見
-        ↓
-Netflix 稍後只改變父層顯示狀態
-        ↓
-插件沒有立即得知
-        ↓
-直到滑鼠移動或播放器 UI 再次更新才重新感應
-```
+### 2. 片頭快轉學習
 
-v1.2.1 改善了這種競態情況：
+- 自動尋找頁面中最大的可見 `<video>`。
+- 正常播放時低頻率保存最近的純影片影格。
+- 監聽 `seeking` / `seeked`，將連續向前快轉視為同一次人工跳過。
+- 快轉至少 20 秒後，詢問是否儲存為片頭資料。
+- 使用者明確儲存後才會寫入本機 storage。
+- 儲存多個 16×9 感知視覺指紋與低解析度預覽。
 
-- 監控已找到的候選控制項與有限的父層可見性變化。
-- Next Episode 候選可等待較長的 Post-play 預先建立階段。
-- 加入有限次的單元素可見性重新確認。
-- 保留 cooldown，避免同一個 Next Episode 被重複點擊。
-- 不恢復高頻率的整頁輪詢。
+### 3. 每部作品最多 3 組片頭
 
----
+- 第一組片頭使用完整學習卡。
+- 已有片頭後，新候選改用右下角極簡單行卡。
+- 差異明顯時可新增片頭 2 / 3。
+- 高度相似時可更新對應片頭。
+- 已滿 3 組時，必須由使用者明確選擇取代哪一組。
 
-## 效能設計
+### 4. 每集只詢問一次
 
-這個專案刻意避免用固定高頻輪詢反覆掃描整個 Netflix 頁面。
+以下情況後，同一集後續快轉不再顯示片頭詢問：
 
-核心方向是：
+- 已成功儲存。
+- 選擇本集略過。
+- 5 秒內完全沒有操作。
+- 已成功自動跳過片頭。
 
-```text
-Netflix DOM 發生變化
-        ↓
-MutationObserver
-        ↓
-只檢查新增／已知候選控制項
-        ↓
-確認功能已開啟
-        ↓
-確認控制項可見且可操作
-        ↓
-Click
-```
+只有明確按下「稍後再問」才會保留本集再次詢問的機會。
 
-目前的設計避免重新使用類似：
+### 5. 視覺辨識與自動跳過
+
+影片影格會縮小為 16×9 灰階感知指紋，再以 Hamming 相似度比對：
+
+| 條件 | 門檻 |
+| --- | ---: |
+| 強命中 | `0.94` |
+| 一般命中 | `0.88`，需短時間內連續命中兩次 |
+| 有 `startTimeHint` | 提示時間前 240 秒至後 360 秒 |
+| 無時間提示 | 最多掃描影片前 10 分鐘 |
+
+命中後執行：
 
 ```js
-setInterval(scanWholeDocument, 500);
+video.currentTime += learnedSkipDuration;
 ```
 
-的全頁持續掃描方式。
+不是使用倍速播放。
+
+### 6. 動畫瘋 Popup 診斷
+
+統一 Popup 的「動畫瘋」分頁保留：
+
+- 目前作品與 ACG ID。
+- 播放器是否找到。
+- 純影片影格是否可讀。
+- 已學習片頭組數。
+- 最近一次片頭相似度。
+- 本集是否已自動跳過。
+- 純影片影格測試。
+- 重新掃描頁面。
+- 清除目前作品全部片頭學習資料。
+- 繁體中文 / 简体中文 / English 切換。
 
 ---
 
-## 隱私與安全
+## 統一 Popup
 
-Netflix Intro & Recap Skipper 的設計原則是盡量只在本機工作。
-
-### 不收集
-
-本擴充功能不主動收集或上傳：
-
-- Netflix 帳號資料
-- 密碼
-- Cookie
-- 觀看紀錄
-- 影片或音訊
-- 字幕內容
-- 個人識別資訊
-- Analytics / Telemetry
-
-### 不使用
-
-- 外部分析 SDK
-- 遠端執行程式碼
-- 外部 AI API
-- Netflix 私有帳號 API
-
-功能開關使用瀏覽器的本機儲存保存。
-
----
-
-## 為什麼 Console 可能還是會看到警告？
-
-Netflix 本身與其他擴充功能可能在開發者工具中產生訊息，例如：
+v2.0.0 以原 Netflix Popup 的深色介面為基礎，新增雙平台分頁：
 
 ```text
-notifications.netflix.com/push CORS
-mozAudioCaptured deprecated
-Netflix font preload warning
-playercore.js.map 403
-Firefox Fingerprinting Protection
-PreMiD performance warning
+┌──────────────────────────────┐
+│ 串流自動播放助手      v2.0.0 │
+├──────────────┬───────────────┤
+│   Netflix    │    動畫瘋      │
+├──────────────┴───────────────┤
+│ 對應平台設定與狀態            │
+└──────────────────────────────┘
 ```
 
-這些訊息不一定來自 Netflix Skipper。
+打開 Popup 時會向目前分頁的 Content Script 詢問平台狀態：
 
-如果要回報本專案 Bug，最好提供：
+- 在 Netflix → 自動選 Netflix。
+- 在動畫瘋 → 自動選動畫瘋。
+- 在其他網站 → 使用上次選擇的平台，但顯示未連接狀態。
 
-- 可穩定重現的操作步驟
-- Netflix 播放畫面截圖
-- Firefox / Chromium 版本
-- 擴充功能版本
-- Console 中包含 `Netflix Skipper` 的錯誤
-- 問題是否在關閉其他 Netflix 相關擴充功能後仍然存在
+兩邊設定共用同一個擴充功能 storage，但使用不同 key，不互相覆蓋。
+
+### Netflix storage keys
+
+```text
+skipIntro
+skipRecap
+skipNextEpisode
+dismissStillWatching
+showToast
+```
+
+### 動畫瘋 storage keys
+
+```text
+autoAgree
+introLearning
+autoSkipIntro
+language
+minLearnSkipSeconds
+introProfiles
+introPromptEpisodeStates
+```
 
 ---
 
-## Firefox 本地測試
+## 隱私與資料處理
 
-若你希望直接測試原始碼：
+本擴充功能不包含 Analytics、Telemetry、廣告追蹤或遠端程式碼。
 
-1. 開啟 Firefox。
-2. 前往：
+### Netflix
 
-   ```text
-   about:debugging#/runtime/this-firefox
-   ```
+Netflix 模組只操作已知的播放器控制項與本機功能設定，不讀取或保存影片內容、字幕、Cookie、密碼或帳號資料。
 
-3. 選擇 **載入暫用附加元件 / Load Temporary Add-on**。
-4. 選擇專案中的 `manifest.json`。
-5. 開啟 Netflix `/watch/...` 頁面測試。
+### 動畫瘋
 
-> 暫用附加元件在 Firefox 重新啟動後會被移除。
+啟用片頭學習或自動辨識時，動畫瘋模組會在瀏覽器本機：
+
+- 從 `<video>` 讀取低解析度影格。
+- 計算感知視覺指紋。
+- 在使用者確認儲存時保存低解析度 JPEG 預覽與學習資料。
+
+這些資料只保存在 `browser.storage.local`，**不會上傳到開發者或任何第三方服務**。
+
+如果瀏覽器因 CORS 安全規則禁止讀取影片像素，擴充功能會停止使用該影格，不嘗試繞過瀏覽器安全限制。
+
+Firefox manifest 明確宣告：
+
+```json
+"data_collection_permissions": {
+  "required": ["none"]
+}
+```
+
+詳細說明請見 [`PRIVACY.md`](PRIVACY.md)。
 
 ---
 
-## 建議測試項目
+## 權限
 
-修改程式碼後，至少確認：
+API 權限只有：
 
-- Skip Intro 可以正常觸發。
-- Skip Recap 可以正常觸發。
-- Next Episode 在**不移動滑鼠**的情況下仍能可靠觸發。
-- Next Episode 不會一次連跳兩集。
-- Still Watching 關閉時不會自行按下 Continue。
-- Popup 與 Player Quick Settings 的五個開關可以雙向同步。
-- Netflix 首頁與搜尋頁不會出現播放器快速設定。
-- 連續播放多集不會累積重複設定按鈕。
-- 全螢幕進出後 UI 仍然正常。
-- Netflix Skipper 沒有長時間異常 CPU 使用率。
+```json
+"permissions": ["storage"]
+```
+
+Content Script 只匹配：
+
+```text
+https://www.netflix.com/*
+https://ani.gamer.com.tw/*
+```
+
+不要求：
+
+- `<all_urls>`
+- Cookie 權限
+- 瀏覽紀錄
+- 下載權限
+- 剪貼簿
+- 桌面擷取
+- 外部帳號
+- 遠端伺服器
 
 ---
 
 ## 專案結構
 
-Firefox v1.2.1 主要檔案：
-
 ```text
-.
-├── manifest.json
-├── content.js
-├── popup.html
-├── popup.css
-├── popup.js
-├── toastify.js
-├── toastify.css
-├── _locales/
-│   ├── zh-TW/
-│   │   └── messages.json
-│   └── en/
-│       └── messages.json
-├── images/
-├── README.md
-├── CHANGELOG.md
-├── PRIVACY.md
-├── THIRD_PARTY_NOTICES.md
-├── TEST_CHECKLIST.md
-└── PROJECT_STRUCTURE.md
+Netflix-Bahamut-Auto-Player-v2.0.0/
+├─ manifest.json
+├─ popup.html
+├─ popup.css
+├─ popup.js
+├─ sites/
+│  ├─ netflix/
+│  │  ├─ content.js
+│  │  ├─ toastify.js
+│  │  └─ toastify.css
+│  └─ bahamut/
+│     ├─ content.js
+│     └─ content.css
+├─ images/
+│  ├─ icon-*.png
+│  └─ bahamut-icon-*.png
+├─ _locales/
+│  ├─ zh-TW/messages.json
+│  └─ en/messages.json
+├─ README.md
+├─ CHANGELOG.md
+├─ PRIVACY.md
+├─ PROJECT_STRUCTURE.md
+├─ TEST_CHECKLIST.md
+├─ THIRD_PARTY_NOTICES.md
+└─ BAHAMUT-LICENSE.txt
 ```
 
-核心功能主要位於 `content.js`。
+---
+
+## 本地安裝 / 測試
+
+1. 在 Firefox 開啟：
+   ```text
+   about:debugging#/runtime/this-firefox
+   ```
+2. 選擇「載入暫用附加元件」。
+3. 選擇專案根目錄的 `manifest.json`。
+4. 分別開啟 Netflix 與動畫瘋測試。
+5. 正式發布前依 [`TEST_CHECKLIST.md`](TEST_CHECKLIST.md) 完整跑一次。
+
+> 暫用附加元件會在 Firefox 重啟後移除。正式安裝仍需經 Firefox Add-ons / AMO 簽署。
+
+---
+
+## 從既有版本升級
+
+### 從 Netflix v1.2.1 更新
+
+因 v2.0.0 沿用 Netflix 專案作為主線，Netflix 的既有設定 key 不變；正常更新時設定可繼續使用。
+
+v2.0.0 新增 `https://ani.gamer.com.tw/*` 的 Content Script 存取範圍，因此 Firefox 在更新時可能顯示新的動畫瘋網站存取提示；這是動畫瘋分級提示、播放器偵測與片頭學習所需要的新增網站範圍，不是 `<all_urls>`。
+
+### 原動畫瘋獨立擴充功能的學習資料
+
+Firefox 的 `storage.local` 依擴充功能身份隔離。原本獨立安裝的「動畫瘋自動播放助手」與此 Netflix 主線擴充功能是不同 identity，因此 **v2.0.0 無法直接讀取舊動畫瘋擴充功能的 `introProfiles`**。
+
+這不影響新合併版功能，但舊動畫瘋插件中已學習的 OP Profile 不會自動出現在新擴充功能中。若需要搬移既有資料，應使用獨立的資料匯出 / 匯入遷移流程，而不是放寬網站權限或嘗試跨擴充功能讀取 storage。
 
 ---
 
 ## 開發注意事項
 
-若要修改播放器偵測邏輯，建議維持以下原則：
+- Netflix 與動畫瘋模組必須保持網站級隔離。
+- 不要把兩個 Content Script 合成一個全站共用腳本。
+- 不要把動畫瘋的 `FRAME_SAMPLE_MS = 420` 取樣機制帶到 Netflix。
+- 不要重新引入 Netflix 500ms 全頁 polling。
+- 不要移除 Netflix v1.2.1 Next Episode hidden-parent 修正。
+- 不要用全頁模糊文字搜尋去點 Netflix 下一集。
+- 不要改變動畫瘋既有 `introProfiles` / `introPromptEpisodeStates` 資料格式，除非同時提供 migration。
+- 不要新增 Analytics、Telemetry、遠端程式碼或未必要的 host permission。
+- 所有文字檔維持 UTF-8。
 
-- 不要重新加入高頻率整頁 DOM polling。
-- 不要使用模糊的全頁文字搜尋去自動點擊 Netflix 控制項。
-- 不要因 Netflix 自己的 CORS / Source Map 警告擴張擴充功能權限。
-- Netflix DOM selector 不確定時，優先 fail closed，而不是猜一個可能誤點的元素。
-- SPA 換集後必須避免重複 observer、重複 listener 與重複 Player Quick Settings。
-- 修改後至少測試連續 3 集 Next Episode。
-- 保持所有文字檔 UTF-8。
-
----
-
-## 已知限制
-
-Netflix 的播放器 DOM、`data-uia`、Post-play 流程與 A/B Test 可能隨時間變更。
-
-因此即使目前功能正常，未來仍可能因 Netflix 更新而需要調整 selector 或播放器掛載邏輯。
-
-若 Netflix 本身沒有提供對應的：
-
-- Skip Intro
-- Skip Recap
-- Next Episode
-- Continue Playing
-
-控制項，本擴充功能不會自行修改影片時間軸來模擬這些功能。
-
----
-
-## 問題回報
-
-如果遇到功能失效或 Netflix 改版：
-
-**[前往 GitHub Issues](https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-/issues)**
-
-回報時請盡量附上：
-
-```text
-Browser:
-Extension version:
-Netflix UI language:
-Feature:
-Reproduction steps:
-Expected result:
-Actual result:
-Console error:
-```
-
-這會比較容易判斷是 Netflix DOM 改版、瀏覽器差異，還是擴充功能本身的 Bug。
+更完整的工程限制請見 [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md)。
 
 ---
 
 ## Credits
 
-本專案來源改編自：
+### Netflix module
 
-- **JohnnyTseng**
-  - https://github.com/JohnnyTseng
-- **SafariNflxAutoSkip**
-  - https://github.com/JohnnyTseng/SafariNflxAutoSkip
+- Original project / concept: [JohnnyTseng](https://github.com/JohnnyTseng)
+- Firefox maintained repository: [ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-](https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-)
+- Toast notifications: Toastify JS 1.12.0 (MIT), bundled locally.
 
-Firefox / Chromium 維護版本：
+### Bahamut module
 
-- **ErttyOuO**
-  - https://github.com/ErttyOuO
-
-感謝原作者與相關開源專案提供基礎。
-
----
-
-## License
-
-本專案採用 **MIT License**。
-
-第三方程式庫的授權資訊請參考專案內的 `THIRD_PARTY_NOTICES.md`。
+動畫瘋 v1.4.0 模組以原獨立專案原始碼整合，保留其 MIT License；詳見 [`BAHAMUT-LICENSE.txt`](BAHAMUT-LICENSE.txt)。
 
 ---
 
 ## Disclaimer
 
-Netflix 是 Netflix, Inc. 的商標。
-
-本專案為非官方開源工具，與 Netflix, Inc. 無關，亦未獲 Netflix 官方贊助、認可或背書。
-
-使用本擴充功能時，請自行確認符合 Netflix 與所在地區適用的服務條款及規範。
+Netflix is a trademark of Netflix, Inc. 巴哈姆特、動畫瘋及其相關商標屬原權利人所有。本專案與 Netflix、巴哈姆特官方沒有隸屬或背書關係。
