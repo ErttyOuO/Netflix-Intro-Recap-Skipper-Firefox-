@@ -10,3 +10,7 @@ This project bundles Toastify JS locally for on-screen notifications. No CDN or 
 - License: MIT
 
 The bundled `toastify.js` and `toastify.css` are included as source files so Firefox/AMO reviewers can inspect them directly.
+
+## Bahamut Anime Auto Player module
+
+The Bahamut Anime module integrated in v2.0.0 is based on the provided v1.4.0 source package and retains its MIT license text in `BAHAMUT-LICENSE.txt`.

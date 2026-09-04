@@ -3,7 +3,7 @@
   "default_locale": "zh-TW",
   "name": "__MSG_extension_name__",
   "description": "__MSG_extension_description__",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "icons": {
     "48": "images/icon-48.png",
     "96": "images/icon-96.png",
@@ -17,18 +17,30 @@
         "https://www.netflix.com/*"
       ],
       "js": [
-        "toastify.js",
-        "content.js"
+        "sites/netflix/toastify.js",
+        "sites/netflix/content.js"
       ],
       "css": [
-        "toastify.css"
+        "sites/netflix/toastify.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://ani.gamer.com.tw/*"
+      ],
+      "js": [
+        "sites/bahamut/content.js"
+      ],
+      "css": [
+        "sites/bahamut/content.css"
       ],
       "run_at": "document_idle"
     }
   ],
   "browser_action": {
     "default_popup": "popup.html",
-    "default_title": "Netflix Skipper",
+    "default_title": "__MSG_extension_name__",
     "default_icon": {
       "48": "images/icon-48.png",
       "96": "images/icon-96.png"

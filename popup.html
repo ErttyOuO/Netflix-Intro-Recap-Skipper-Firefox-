@@ -3,94 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Netflix Skipper</title>
+  <title>Streaming Auto Player</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="popup-container">
+  <main class="popup-container">
     <header class="header">
-      <img src="images/icon-48.png" alt="Netflix Skipper" class="logo">
-      <div>
-        <h1 data-i18n="popup_title">Netflix Skipper</h1>
+      <img src="images/icon-48.png" alt="" class="logo" width="34" height="34">
+      <div class="header-copy">
+        <h1 data-i18n="popup_title">串流自動播放助手</h1>
         <p class="version" id="versionText"></p>
       </div>
     </header>
 
-    <section class="status-card" aria-live="polite">
-      <div class="status-line">
-        <span class="status-dot" id="statusDot" aria-hidden="true"></span>
-        <span id="statusText" data-i18n="status_checking">正在確認目前頁面…</span>
+    <nav class="platform-tabs" aria-label="Platform">
+      <button id="tabNetflix" class="platform-tab is-active netflix" type="button" data-platform="netflix" aria-selected="true">
+        <span class="platform-mark netflix-mark">N</span>
+        <span>Netflix</span>
+      </button>
+      <button id="tabBahamut" class="platform-tab bahamut" type="button" data-platform="bahamut" aria-selected="false">
+        <img src="images/bahamut-icon-32.png" alt="" width="18" height="18">
+        <span>動畫瘋</span>
+      </button>
+    </nav>
+
+    <section id="netflixPanel" class="platform-panel" data-panel="netflix">
+      <section class="status-card" aria-live="polite">
+        <div class="status-line">
+          <span class="status-dot netflix-dot" id="netflixStatusDot" aria-hidden="true"></span>
+          <span id="netflixStatusText" data-i18n="status_checking">正在確認目前頁面…</span>
+        </div>
+        <p class="session-count" id="netflixSessionCount"></p>
+      </section>
+
+      <section class="settings netflix-settings" aria-label="Netflix settings">
+        <div class="setting-item">
+          <div class="setting-info"><span class="setting-icon" aria-hidden="true">🍿</span><span class="setting-label" data-i18n="setting_skip_intro">自動跳過片頭</span></div>
+          <label class="toggle netflix-toggle"><input type="checkbox" id="skipIntro" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info"><span class="setting-icon" aria-hidden="true">🕵️</span><span class="setting-label" data-i18n="setting_skip_recap">自動跳過前情提要</span></div>
+          <label class="toggle netflix-toggle"><input type="checkbox" id="skipRecap" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info"><span class="setting-icon" aria-hidden="true">📺</span><span class="setting-label" data-i18n="setting_next_episode">自動播放下一集</span></div>
+          <label class="toggle netflix-toggle"><input type="checkbox" id="skipNextEpisode" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-icon" aria-hidden="true">▶️</span>
+            <div class="setting-copy"><span class="setting-label" data-i18n="setting_still_watching">自動繼續播放</span><span class="setting-note" data-i18n="setting_still_watching_note">處理「仍在觀看嗎」提示，預設關閉</span></div>
+          </div>
+          <label class="toggle netflix-toggle"><input type="checkbox" id="dismissStillWatching"><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info"><span class="setting-icon" aria-hidden="true">🔔</span><span class="setting-label" data-i18n="setting_toast">顯示跳過提示</span></div>
+          <label class="toggle netflix-toggle"><input type="checkbox" id="showToast" checked><span class="slider"></span></label>
+        </div>
+      </section>
+
+      <div class="module-note">
+        <strong>Player Quick Settings</strong>
+        <span>Netflix 播放頁內仍可直接開啟同一組設定。</span>
       </div>
-      <p class="session-count" id="sessionCount"></p>
     </section>
 
-    <section class="settings">
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-icon" aria-hidden="true">🍿</span>
-          <span class="setting-label" data-i18n="setting_skip_intro">自動跳過片頭</span>
+    <section id="bahamutPanel" class="platform-panel is-hidden" data-panel="bahamut">
+      <section class="status-card bahamut-status" aria-live="polite">
+        <div class="status-line">
+          <span class="status-dot bahamut-dot" id="bahamutStatusDot" aria-hidden="true"></span>
+          <span id="bahamutStatusText">正在確認動畫瘋頁面…</span>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="skipIntro" checked data-i18n-aria-label="setting_skip_intro">
-          <span class="slider"></span>
-        </label>
-      </div>
+        <p class="session-count" id="bahamutStatusSub">分級自動同意 + 片頭學習與自動跳過</p>
+      </section>
 
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-icon" aria-hidden="true">🕵️</span>
-          <span class="setting-label" data-i18n="setting_skip_recap">自動跳過前情提要</span>
+      <section class="settings" aria-label="Bahamut settings">
+        <div class="setting-item">
+          <div class="setting-copy"><span id="autoAgreeTitle" class="setting-label">自動按下「同意」</span><span id="autoAgreeDesc" class="setting-note">偵測到分級提示後立即確認</span></div>
+          <label class="toggle bahamut-toggle"><input id="autoAgree" type="checkbox"><span class="slider"></span></label>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="skipRecap" checked data-i18n-aria-label="setting_skip_recap">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-icon" aria-hidden="true">📺</span>
-          <span class="setting-label" data-i18n="setting_next_episode">自動播放下一集</span>
+        <div class="setting-item">
+          <div class="setting-copy"><span id="introLearningTitle" class="setting-label">片頭快轉學習</span><span id="introLearningDesc" class="setting-note">人工快轉後詢問是否記錄</span></div>
+          <label class="toggle bahamut-toggle"><input id="introLearning" type="checkbox"><span class="slider"></span></label>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="skipNextEpisode" checked data-i18n-aria-label="setting_next_episode">
-          <span class="slider"></span>
-        </label>
-      </div>
+        <div class="setting-item">
+          <div class="setting-copy"><span id="autoSkipTitle" class="setting-label">自動跳過已學習片頭</span><span id="autoSkipDesc" class="setting-note">辨識片頭畫面後直接跳過</span></div>
+          <label class="toggle bahamut-toggle"><input id="autoSkipIntro" type="checkbox"><span class="slider"></span></label>
+        </div>
+      </section>
 
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-icon" aria-hidden="true">▶️</span>
-          <div class="setting-copy">
-            <span class="setting-label" data-i18n="setting_still_watching">自動繼續播放</span>
-            <span class="setting-note" data-i18n="setting_still_watching_note">處理「仍在觀看嗎」提示，預設關閉</span>
+      <section class="diagnostic" aria-label="Current Bahamut title diagnostics">
+        <div id="diagTitle" class="section-title">目前作品</div>
+        <div class="diag-row"><span id="workLabel">作品</span><strong id="workTitle">尚未讀取</strong></div>
+        <div class="diag-row"><span id="workIdLabel">作品 ID</span><strong id="workId">—</strong></div>
+        <div class="diag-row"><span id="videoLabel">播放器</span><strong id="videoStatus">—</strong></div>
+        <div class="diag-row"><span id="frameLabel">純影格讀取</span><strong id="frameStatus">—</strong></div>
+        <div class="diag-row"><span id="profileLabel">已學習片頭</span><strong id="profileCount">0</strong></div>
+        <div class="diag-row"><span id="matchSimilarityLabel">最近片頭相似度</span><strong id="matchSimilarity">尚未比對</strong></div>
+        <div class="diag-row"><span id="autoSkipStateLabel">本集自動跳過</span><strong id="autoSkipState">尚未觸發</strong></div>
+      </section>
+
+      <div class="button-grid">
+        <button id="testFrame" class="primary-soft" type="button">測試純影片影格</button>
+        <button id="scanNow" class="secondary" type="button">重新掃描頁面</button>
+      </div>
+      <button id="clearLearning" class="danger" type="button">刪除目前作品的片頭學習資料</button>
+      <div id="bahamutActionStatus" class="action-status" role="status" aria-live="polite"></div>
+
+      <section class="bahamut-notice">
+        <p id="noticePrimary">v1.4.0 新片頭詢問每集只出現一次；只有按「稍後再問」才會再次詢問。</p>
+      </section>
+
+      <footer class="language-footer">
+        <div class="language-bar" aria-labelledby="languageLabel">
+          <span class="language-icon" aria-hidden="true">◎</span>
+          <span id="languageLabel" class="language-label">語言</span>
+          <div class="language-segment" role="group" aria-label="Language">
+            <button type="button" data-lang="zh-TW">繁體中文</button>
+            <button type="button" data-lang="zh-CN">简体中文</button>
+            <button type="button" data-lang="en">English</button>
           </div>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="dismissStillWatching" data-i18n-aria-label="setting_still_watching">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-icon" aria-hidden="true">🔔</span>
-          <span class="setting-label" data-i18n="setting_toast">顯示跳過提示</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="showToast" checked data-i18n-aria-label="setting_toast">
-          <span class="slider"></span>
-        </label>
-      </div>
+        <p id="noticePrivacy" class="privacy">影片影格與學習資料只儲存在本機，不會上傳到外部服務。</p>
+      </footer>
     </section>
 
-    <footer class="footer">
-      <p class="credit">
-        <span data-i18n="credit_original">原作者</span>：<a href="https://github.com/JohnnyTseng" target="_blank" rel="noreferrer">JohnnyTseng</a><br>
-        <span data-i18n="credit_firefox">Firefox 版本</span>：<a href="https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-" target="_blank" rel="noreferrer">ErttyOuO</a>
-      </p>
+    <footer class="global-footer">
+      <p class="credit"><span data-i18n="credit_original">Netflix 原作者</span>：<a href="https://github.com/JohnnyTseng" target="_blank" rel="noreferrer">JohnnyTseng</a><br><span data-i18n="credit_firefox">Firefox 維護版本</span>：<a href="https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-" target="_blank" rel="noreferrer">ErttyOuO</a></p>
     </footer>
-  </div>
+  </main>
   <script src="popup.js"></script>
 </body>
 </html>

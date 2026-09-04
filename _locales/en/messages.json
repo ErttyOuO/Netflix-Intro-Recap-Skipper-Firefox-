@@ -1,12 +1,12 @@
 {
   "extension_name": {
-    "message": "Netflix Intro & Recap Skipper"
+    "message": "Netflix & Bahamut Auto Player"
   },
   "extension_description": {
-    "message": "Automatically handles Netflix Skip Intro, Skip Recap, and Next Episode controls with in-player quick settings, optional Continue Playing support, and no viewing-data collection."
+    "message": "One Firefox extension for Netflix intro/recap/next-episode automation and in-player quick settings, plus Bahamut Anime rating consent, opening learning, and visual auto-skip. Settings and learning data stay local."
   },
   "popup_title": {
-    "message": "Netflix Skipper"
+    "message": "Streaming Auto Player"
   },
   "status_checking": {
     "message": "Checking the current page…"
@@ -18,7 +18,7 @@
     "message": "This Netflix page is not in playback mode"
   },
   "status_unavailable": {
-    "message": "Playback status is available on Netflix pages only"
+    "message": "The current tab is not a supported playback page"
   },
   "session_count": {
     "message": "$COUNT$ actions handled on this page",
@@ -59,10 +59,10 @@
     "message": "Playback continued! ▶️"
   },
   "credit_original": {
-    "message": "Original author"
+    "message": "Netflix original author"
   },
   "credit_firefox": {
-    "message": "Firefox version"
+    "message": "Firefox maintained version"
   },
   "player_settings_button": {
     "message": "Netflix Skipper quick settings"

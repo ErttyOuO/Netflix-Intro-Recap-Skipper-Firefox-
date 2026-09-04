@@ -1,12 +1,12 @@
 {
   "extension_name": {
-    "message": "Netflix 片頭片尾自動跳過"
+    "message": "Netflix + 動畫瘋自動播放助手"
   },
   "extension_description": {
-    "message": "自動處理 Netflix 的跳過片頭、前情提要與下一集，並在播放器內提供快速設定；可選擇自動繼續播放，且不收集或傳送觀看資料。"
+    "message": "同一個 Firefox 擴充功能支援 Netflix 自動跳過片頭、前情提要、下一集與播放器快速設定，以及動畫瘋分級自動同意、片頭學習與視覺辨識自動跳過；所有設定與學習資料僅保存在本機。"
   },
   "popup_title": {
-    "message": "Netflix Skipper"
+    "message": "串流自動播放助手"
   },
   "status_checking": {
     "message": "正在確認目前頁面…"
@@ -18,7 +18,7 @@
     "message": "目前 Netflix 頁面未進入播放模式"
   },
   "status_unavailable": {
-    "message": "僅在 Netflix 頁面提供播放狀態"
+    "message": "目前分頁不是支援的播放頁面"
   },
   "session_count": {
     "message": "本頁已自動處理 $COUNT$ 次",
@@ -59,10 +59,10 @@
     "message": "已自動繼續播放！▶️"
   },
   "credit_original": {
-    "message": "原作者"
+    "message": "Netflix 原作者"
   },
   "credit_firefox": {
-    "message": "Firefox 版本"
+    "message": "Firefox 維護版本"
   },
   "player_settings_button": {
     "message": "Netflix Skipper 快速設定"
