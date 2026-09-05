@@ -3,7 +3,7 @@
     "message": "Netflix & Bahamut Auto Player"
   },
   "extension_description": {
-    "message": "One Firefox extension for Netflix intro/recap/next-episode automation and in-player quick settings, plus Bahamut Anime rating consent, opening learning, and visual auto-skip. Settings and learning data stay local."
+    "message": "One Firefox extension for Netflix intro/recap/next-episode automation and in-player quick settings, plus Bahamut Anime rating consent, opening/ending learning, and visual auto-skip. Settings and learning data stay local."
   },
   "popup_title": {
     "message": "Streaming Auto Player"
@@ -62,7 +62,7 @@
     "message": "Netflix original author"
   },
   "credit_firefox": {
-    "message": "Firefox maintained version"
+    "message": "Firefox maintained build"
   },
   "player_settings_button": {
     "message": "Netflix Skipper quick settings"

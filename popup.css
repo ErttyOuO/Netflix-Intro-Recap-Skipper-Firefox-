@@ -183,7 +183,7 @@ button { color: inherit; }
 .diag-row span { color: var(--text-secondary); }
 .diag-row strong { overflow: hidden; color: #e9eef9; font-weight: 650; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 #videoStatus, #frameStatus { color: #7de2aa; }
-#matchSimilarity { color: #9eb9ff; }
+#matchSimilarity, #outroMatchSimilarity { color: #9eb9ff; }
 
 .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 9px; }
 .primary-soft, .secondary, .danger {
@@ -217,3 +217,19 @@ button { color: inherit; }
 .credit { color: #737c8b; font-size: 9.5px; line-height: 1.55; }
 .credit a { color: #a9b3c3; text-decoration: none; }
 .credit a:hover { text-decoration: underline; color: #fff; }
+
+/* v2.2.0 Bahamut opening/ending-learning backup */
+.learning-backup { margin-top: 2px; }
+.backup-grid { margin-top: 7px; }
+.backup-note { margin: 5px 2px 0; color: #727f94; font-size: 8.7px; line-height: 1.42; }
+.visually-hidden {
+  position: fixed !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

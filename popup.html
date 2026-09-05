@@ -74,7 +74,7 @@
           <span class="status-dot bahamut-dot" id="bahamutStatusDot" aria-hidden="true"></span>
           <span id="bahamutStatusText">正在確認動畫瘋頁面…</span>
         </div>
-        <p class="session-count" id="bahamutStatusSub">分級自動同意 + 片頭學習與自動跳過</p>
+        <p class="session-count" id="bahamutStatusSub">分級自動同意 + 片頭／片尾學習與自動跳過</p>
       </section>
 
       <section class="settings" aria-label="Bahamut settings">
@@ -87,8 +87,16 @@
           <label class="toggle bahamut-toggle"><input id="introLearning" type="checkbox"><span class="slider"></span></label>
         </div>
         <div class="setting-item">
-          <div class="setting-copy"><span id="autoSkipTitle" class="setting-label">自動跳過已學習片頭</span><span id="autoSkipDesc" class="setting-note">辨識片頭畫面後直接跳過</span></div>
+          <div class="setting-copy"><span id="autoSkipTitle" class="setting-label">自動跳過已學習片頭</span><span id="autoSkipDesc" class="setting-note">只在影片前 3 分鐘辨識；成功一次後本集停止片頭偵測</span></div>
           <label class="toggle bahamut-toggle"><input id="autoSkipIntro" type="checkbox"><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-copy"><span id="outroLearningTitle" class="setting-label">片尾快轉學習</span><span id="outroLearningDesc" class="setting-note">影片最後 4 分鐘的人工快轉可記錄為片尾</span></div>
+          <label class="toggle bahamut-toggle"><input id="outroLearning" type="checkbox"><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-copy"><span id="autoSkipOutroTitle" class="setting-label">自動跳過已學習片尾</span><span id="autoSkipOutroDesc" class="setting-note">最後 4 分鐘辨識片尾；可取消倒數並繼續觀看</span></div>
+          <label class="toggle bahamut-toggle"><input id="autoSkipOutro" type="checkbox"><span class="slider"></span></label>
         </div>
       </section>
 
@@ -100,18 +108,29 @@
         <div class="diag-row"><span id="frameLabel">純影格讀取</span><strong id="frameStatus">—</strong></div>
         <div class="diag-row"><span id="profileLabel">已學習片頭</span><strong id="profileCount">0</strong></div>
         <div class="diag-row"><span id="matchSimilarityLabel">最近片頭相似度</span><strong id="matchSimilarity">尚未比對</strong></div>
-        <div class="diag-row"><span id="autoSkipStateLabel">本集自動跳過</span><strong id="autoSkipState">尚未觸發</strong></div>
+        <div class="diag-row"><span id="autoSkipStateLabel">本集片頭自動跳過</span><strong id="autoSkipState">尚未觸發</strong></div>
+        <div class="diag-row"><span id="outroProfileLabel">已學習片尾</span><strong id="outroProfileCount">0</strong></div>
+        <div class="diag-row"><span id="outroMatchSimilarityLabel">最近片尾相似度</span><strong id="outroMatchSimilarity">尚未比對</strong></div>
+        <div class="diag-row"><span id="outroAutoSkipStateLabel">本集片尾動作</span><strong id="outroAutoSkipState">尚未觸發</strong></div>
       </section>
 
       <div class="button-grid">
         <button id="testFrame" class="primary-soft" type="button">測試純影片影格</button>
         <button id="scanNow" class="secondary" type="button">重新掃描頁面</button>
       </div>
-      <button id="clearLearning" class="danger" type="button">刪除目前作品的片頭學習資料</button>
+      <section class="learning-backup" aria-label="Opening learning backup">
+        <div class="button-grid backup-grid">
+          <button id="exportLearning" class="secondary" type="button">匯出片頭／片尾學習資料</button>
+          <button id="importLearning" class="secondary" type="button">匯入片頭／片尾學習資料</button>
+        </div>
+        <input id="importLearningFile" class="visually-hidden" type="file" accept="application/json,.json">
+        <p id="learningBackupNote" class="backup-note">可將作品名稱、作品 ID、片頭／片尾影格指紋、預覽圖與跳過時間完整備份／還原。</p>
+      </section>
+      <button id="clearLearning" class="danger" type="button">刪除目前作品的片頭／片尾學習資料</button>
       <div id="bahamutActionStatus" class="action-status" role="status" aria-live="polite"></div>
 
       <section class="bahamut-notice">
-        <p id="noticePrimary">v1.4.0 新片頭詢問每集只出現一次；只有按「稍後再問」才會再次詢問。</p>
+        <p id="noticePrimary">v2.2.0：片頭只掃描前 3 分鐘；新增片尾學習、倒數跳過、同集多段學習與 ±2 秒結束點預覽。</p>
       </section>
 
       <footer class="language-footer">

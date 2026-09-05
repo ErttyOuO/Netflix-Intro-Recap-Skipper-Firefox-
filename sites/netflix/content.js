@@ -4,6 +4,9 @@
 (() => {
   'use strict';
 
+  const extensionApi = globalThis.browser || globalThis.chrome;
+  if (!extensionApi) return;
+
   const DEFAULT_SETTINGS = Object.freeze({
     skipIntro: true,
     skipRecap: true,
@@ -89,7 +92,7 @@
   }
 
   function getMessage(key) {
-    return browser.i18n.getMessage(key) || key;
+    return extensionApi.i18n.getMessage(key) || key;
   }
 
   function isVisible(element) {
@@ -677,7 +680,7 @@
       settings[item.key] = value;
 
       try {
-        await browser.storage.local.set({ [item.key]: value });
+        await extensionApi.storage.local.set({ [item.key]: value });
       } catch (error) {
         console.error(`[Netflix Skipper] Failed to save ${item.key}:`, error);
         settings[item.key] = !value;
@@ -889,7 +892,7 @@
 
   async function loadSettings() {
     try {
-      const result = await browser.storage.local.get(Object.keys(DEFAULT_SETTINGS));
+      const result = await extensionApi.storage.local.get(Object.keys(DEFAULT_SETTINGS));
       settings = { ...DEFAULT_SETTINGS, ...result };
     } catch (error) {
       console.error('[Netflix Skipper] Failed to load settings:', error);
@@ -901,7 +904,7 @@
     }
   }
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  extensionApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
 
     for (const key of Object.keys(DEFAULT_SETTINGS)) {
@@ -916,8 +919,8 @@
     scanExistingControls();
   });
 
-  browser.runtime.onMessage.addListener((request) => {
-    if (!request) return undefined;
+  extensionApi.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+    if (!request) return false;
 
     const makeStatus = () => ({
       platform: 'netflix',
@@ -925,14 +928,15 @@
       stats: { ...sessionStats },
       quickSettingsMounted: Boolean(quickSettingsHost?.isConnected),
       quickSettingsPlacement: quickSettingsHost?.getAttribute('data-placement') || null,
-      version: browser.runtime.getManifest().version
+      version: extensionApi.runtime.getManifest().version
     });
 
     if (request.type === 'netflixSkipper:getStatus' || request.type === 'unified:getPlatformStatus') {
-      return Promise.resolve(makeStatus());
+      sendResponse(makeStatus());
+      return false;
     }
 
-    return undefined;
+    return false;
   });
 
   document.addEventListener('pointerdown', (event) => {

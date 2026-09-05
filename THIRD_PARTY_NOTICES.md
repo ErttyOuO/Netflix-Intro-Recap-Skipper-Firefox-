@@ -9,7 +9,7 @@ This project bundles Toastify JS locally for on-screen notifications. No CDN or 
 - Version represented in bundled JavaScript: 1.12.0
 - License: MIT
 
-The bundled `toastify.js` and `toastify.css` are included as source files so Firefox/AMO reviewers can inspect them directly.
+The bundled `toastify.js` and `toastify.css` are included as source files so extension reviewers can inspect them directly.
 
 ## Bahamut Anime Auto Player module
 
