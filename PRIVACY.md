@@ -1,6 +1,6 @@
 # Privacy Policy — Netflix + 動畫瘋自動播放助手
 
-Version: 2.2.0
+Version: 2.2.6
 
 本擴充功能以本機執行為原則，不包含 Analytics、Telemetry、廣告追蹤或遠端程式碼。
 
@@ -14,11 +14,9 @@ Version: 2.2.0
 }
 ```
 
-這裡的「none」表示擴充功能不把使用者資料傳送到擴充功能之外做儲存或處理。
-
 ## Local storage
 
-擴充功能使用 Firefox `storage.local` 保存本機設定與學習資料。主要項目如下。
+擴充功能使用 Firefox `storage.local` 保存設定與動畫瘋學習資料。
 
 ### Netflix
 
@@ -30,57 +28,50 @@ Version: 2.2.0
 
 ### 共用介面
 
-- `unifiedLastPlatform`：記住 Popup 上次查看的 Netflix／動畫瘋分頁。
+- `unifiedLastPlatform`：記住 Popup 上次查看的平台。
 
 ### 動畫瘋
 
 - `autoAgree`
-- `introLearning`
-- `autoSkipIntro`
-- `outroLearning`
-- `autoSkipOutro`
+- `introLearning` / `autoSkipIntro`
+- `outroLearning` / `autoSkipOutro`
 - `language`
 - `minLearnSkipSeconds`
-- `introProfiles`
-- `outroProfiles`
-- `bahamutLearningPromptHistoryV2`：記錄單集已處理過的人工快轉片段，避免同一片段重複詢問。
-
-以上資料都保存在使用者自己的 Firefox 擴充功能本機儲存空間。
+- `introProfiles` / `outroProfiles`
+- `bahamutLearningPromptHistoryV2`：保存本集已完成或明確「略過本集」的學習提示狀態。
 
 ## Netflix module
 
-Netflix 模組不收集或保存 Netflix 帳號、密碼、Cookie、字幕、影片／音訊內容或觀看紀錄。它只在 Netflix 頁面中辨識已知播放器控制項，並依本機設定處理片頭、前情提要、下一集與「仍在觀看嗎」等控制項。
+Netflix 模組不保存帳號、密碼、Cookie、字幕、影片／音訊內容或觀看紀錄。它只在 Netflix 頁面辨識已知播放器控制項並依本機設定操作。
 
-## Bahamut Anime module
+## Bahamut Anime learning data
 
-動畫瘋模組支援本機片頭／片尾學習。使用者明確儲存學習資料時，`introProfiles` 與 `outroProfiles` 可能包含：
+動畫瘋學習資料可能包含：
 
-- 動畫作品 ID 與作品名稱
-- 人工快轉起點、結束點與跳過秒數
-- `−2 / 原位置 / +2 秒` 結束點調整值
-- 從 `<video>` 取得的低解析度 JPEG 預覽縮圖
-- 由影片影格計算的感知視覺指紋
-- 建立資料時的動畫瘋集數 URL
+- 作品 ID、名稱與來源集數 URL
+- 人工快轉入點、結束點、跳過秒數與累積 ±2 秒調整值
+- **精確入點的低解析度 JPEG 預覽圖與視覺指紋**
+- **片段開始後數秒內的多個低解析度視覺指紋 anchors**（只保存 16 × 9 二值視覺指紋與時間 offset，不保存這些中間影格的 JPEG 圖）
+- **目前選定結束點的低解析度 JPEG 預覽圖**
+- Profile schema / anchor metadata
 
-這些資料只用於本機辨識與使用者自行備份，不會自動傳送給開發者或第三方。
+v2.2.4 起不再把快轉前數秒的歷史影格混入新 Profile。v2.2.6 進一步在使用者按下儲存時，短暫於本機重新定位到片段開始後前 6 秒，建立多個 post-start anchors，再恢復使用者原本的片段結束位置與播放狀態。所有影格處理都只在目前動畫瘋分頁與本機記憶體完成；中間採樣影格不會上傳，也不會以 JPEG 形式逐張保存。
 
 ## Video frame processing
 
-啟用動畫瘋片頭／片尾學習或自動跳過時，模組會直接從頁面中的 `<video>` 讀取低解析度影格，用於本機視覺指紋計算與相似度比對。
+啟用動畫瘋學習或自動跳過時，模組會從頁面 `<video>` 讀取低解析度影格，在本機計算 16 × 9 感知視覺指紋。
 
-- 片頭自動辨識只在單集前 3 分鐘進行。
-- 片頭成功自動跳過一次後，本集停止片頭自動匹配。
-- 若片頭學習仍開啟，03:00 前可以保留較低頻率的學習取樣，以支援同一集第二／第三段片頭學習。
-- 片尾辨識只在影片最後 4 分鐘進行。
-- 片尾動作完成或使用者取消後，本集停止後續片尾自動辨識。
+- 片頭辨識：影片前 10 分鐘。
+- 片頭學習候選：單次人工向前快轉超過 3 分鐘時視為一般找進度，不顯示學習詢問。
+- 片尾辨識：影片最後 6 分鐘。
+- 新 Profile 的入點影格必須足夠接近實際人工快轉起點；儲存時還必須取得至少 3 個有效的 post-start 視覺 anchors。
+- 若 CORS 阻止讀取影片像素，擴充功能不會繞過瀏覽器限制。
 
-影格讀取不是桌面擷取，因此正常情況下不包含網頁彈幕 DOM、播放器控制列、擴充功能 UI 或其他分頁。若瀏覽器因 CORS 安全規則禁止讀取影片像素，擴充功能會停止使用該影格，不嘗試繞過瀏覽器限制。
+影格讀取不是桌面擷取，正常情況不包含彈幕 DOM、控制列、擴充功能 UI 或其他分頁。
 
 ## Learning-data export and import
 
-v2.2.0 可由使用者主動將動畫瘋片頭與片尾學習資料匯出成 JSON 檔案，也可以手動匯入。備份內容可能包含作品名稱／ID、影格指紋、預覽圖、跳過秒數、時間提示、±2 秒調整值與來源集數 URL。
-
-匯出檔只由瀏覽器在本機產生，不會自動上傳；匯入只會寫回本機 `storage.local`。
+v2.2.6 的備份 schema 為 `3`，可保存精確入點、起訖預覽圖、視覺指紋、跳過時間與調整值；仍可匯入舊版備份。匯出檔只在本機產生，不會自動上傳。
 
 ## Network access
 
@@ -93,11 +84,11 @@ Content Script 僅匹配：
 - `https://www.netflix.com/*`
 - `https://ani.gamer.com.tw/*`
 
-Netflix 與動畫瘋使用不同 Content Script，不會在另一個網站啟動不相關的播放器邏輯。
+兩個網站使用獨立 Content Script。
 
 ## Legacy Bahamut storage
 
-Firefox 的 `storage.local` 依擴充功能 identity 隔離。舊的獨立動畫瘋擴充功能資料不會被本擴充功能秘密存取或跨 extension 讀取。
+Firefox `storage.local` 依擴充功能 identity 隔離。舊的獨立動畫瘋擴充功能資料不會被秘密跨 extension 讀取。
 
 ## Disclaimer
 

@@ -1,4 +1,4 @@
-// Unified Netflix + Bahamut popup controller - v2.2.0
+// Unified Netflix + Bahamut popup controller - v2.2.6
 
 const extensionApi = globalThis.browser || globalThis.chrome;
 if (!extensionApi) throw new Error("WebExtension API unavailable");
@@ -30,11 +30,11 @@ const BAHAMUT_TEXT = Object.freeze({
       introLearningTitle: "片頭快轉學習",
       introLearningDesc: "人工快轉後詢問是否記錄",
       autoSkipTitle: "自動跳過已學習片頭",
-      autoSkipDesc: "只在影片前 3 分鐘辨識；成功一次後本集停止片頭偵測",
+      autoSkipDesc: "只在影片前 10 分鐘辨識；成功一次後本集停止片頭偵測",
       outroLearningTitle: "片尾快轉學習",
-      outroLearningDesc: "影片最後 4 分鐘的人工快轉可記錄為片尾",
+      outroLearningDesc: "影片最後 6 分鐘的人工快轉可記錄為片尾",
       autoSkipOutroTitle: "自動跳過已學習片尾",
-      autoSkipOutroDesc: "最後 4 分鐘辨識片尾；可取消倒數並繼續觀看",
+      autoSkipOutroDesc: "最後 6 分鐘辨識片尾；可取消倒數並繼續觀看",
       diagTitle: "目前作品",
       work: "作品",
       workId: "作品 ID",
@@ -51,7 +51,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "測試純影片影格",
       scan: "重新掃描頁面",
       clear: "刪除目前作品的片頭／片尾學習資料",
-      noticePrimary: "v2.2.0：片頭只掃描前 3 分鐘；新增片尾學習、倒數跳過、同集多段學習與 ±2 秒結束點預覽。",
+      noticePrimary: "v2.2.6：儲存片頭／片尾時會建立多影格錨點，避免只靠第一幀造成下一集無法辨識；單影格舊資料建議重新學習。",
       noticePrivacy: "影片影格與學習資料只儲存在本機，不會上傳到外部服務。",
       notRead: "尚未讀取",
       notDetected: "未辨識",
@@ -97,7 +97,21 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "匯入完成：{works} 部作品、{intro} 組片頭、{outro} 組片尾；重複資料已自動略過。",
       importInvalid: "這不是有效的動畫瘋片頭／片尾學習資料檔。",
       importFail: "片頭／片尾學習資料匯入失敗。",
-      learningBackupNote: "可將作品名稱、作品 ID、片頭／片尾影格指紋、預覽圖與跳過時間完整備份／還原。",
+      learningBackupNote: "可將作品名稱、作品 ID、片頭／片尾精確入點、起訖預覽圖與跳過時間完整備份／還原。",
+      profileManagerTitle: "已儲存片段",
+      introGroup: "片頭",
+      outroGroup: "片尾",
+      noProfiles: "尚未儲存",
+      startFrame: "入點",
+      endFrame: "結束",
+      noPreview: "無預覽",
+      preciseProfile: "精確入點",
+      multiAnchorProfile: "多影格 · {count} 錨點",
+      legacyProfile: "單影格舊資料 · 建議重新學習",
+      deleteProfile: "刪除",
+      deletingProfile: "正在刪除片段…",
+      profileDeleted: "已刪除指定片段。",
+      profileDeleteFail: "刪除指定片段失敗。",
       outroPending: "倒數中",
       outroSkipped: "✓ 已跳過",
       outroNext: "✓ 前往下一集",
@@ -113,11 +127,11 @@ const BAHAMUT_TEXT = Object.freeze({
       introLearningTitle: "片头快转学习",
       introLearningDesc: "人工快转后询问是否记录",
       autoSkipTitle: "自动跳过已学习片头",
-      autoSkipDesc: "只在影片前 3 分钟辨识；成功一次后本集停止片头侦测",
+      autoSkipDesc: "只在影片前 10 分钟辨识；成功一次后本集停止片头侦测",
       outroLearningTitle: "片尾快转学习",
-      outroLearningDesc: "影片最后 4 分钟的人工快转可记录为片尾",
+      outroLearningDesc: "影片最后 6 分钟的人工快转可记录为片尾",
       autoSkipOutroTitle: "自动跳过已学习片尾",
-      autoSkipOutroDesc: "最后 4 分钟辨识片尾；可取消倒数并继续观看",
+      autoSkipOutroDesc: "最后 6 分钟辨识片尾；可取消倒数并继续观看",
       diagTitle: "目前作品",
       work: "作品",
       workId: "作品 ID",
@@ -134,7 +148,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "测试纯影片影格",
       scan: "重新扫描页面",
       clear: "删除目前作品的片头／片尾学习资料",
-      noticePrimary: "v2.2.0：片头只扫描前 3 分钟；新增片尾学习、倒数跳过、同集多段学习与 ±2 秒结束点预览。",
+      noticePrimary: "v2.2.6：储存片头／片尾时会建立多影格锚点，避免只靠第一帧造成下一集无法辨识；单影格旧资料建议重新学习。",
       noticePrivacy: "影片影格与学习资料只储存在本机，不会上传到外部服务。",
       notRead: "尚未读取",
       notDetected: "未辨识",
@@ -180,7 +194,21 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "导入完成：{works} 部作品、{intro} 组片头、{outro} 组片尾；重复资料已自动略过。",
       importInvalid: "这不是有效的动画疯片头／片尾学习资料档。",
       importFail: "片头／片尾学习资料导入失败。",
-      learningBackupNote: "可将作品名称、作品 ID、片头／片尾影格指纹、预览图与跳过时间完整备份／还原。",
+      learningBackupNote: "可将作品名称、作品 ID、片头／片尾精确入点、起讫预览图与跳过时间完整备份／还原。",
+      profileManagerTitle: "已储存片段",
+      introGroup: "片头",
+      outroGroup: "片尾",
+      noProfiles: "尚未储存",
+      startFrame: "入点",
+      endFrame: "结束",
+      noPreview: "无预览",
+      preciseProfile: "精确入点",
+      multiAnchorProfile: "多影格 · {count} 锚点",
+      legacyProfile: "单影格旧资料 · 建议重新学习",
+      deleteProfile: "删除",
+      deletingProfile: "正在删除片段…",
+      profileDeleted: "已删除指定片段。",
+      profileDeleteFail: "删除指定片段失败。",
       outroPending: "倒数中",
       outroSkipped: "✓ 已跳过",
       outroNext: "✓ 前往下一集",
@@ -196,11 +224,11 @@ const BAHAMUT_TEXT = Object.freeze({
       introLearningTitle: "Learn opening skips",
       introLearningDesc: "Ask to save after a manual opening seek",
       autoSkipTitle: "Auto-skip learned openings",
-      autoSkipDesc: "Only scan the first 3 minutes; stop opening matching after one successful skip",
+      autoSkipDesc: "Only scan the first 10 minutes; stop opening matching after one successful skip",
       outroLearningTitle: "Learn ending skips",
-      outroLearningDesc: "Manual forward seeks in the final 4 minutes can be saved as endings",
+      outroLearningDesc: "Manual forward seeks in the final 6 minutes can be saved as endings",
       autoSkipOutroTitle: "Auto-skip learned endings",
-      autoSkipOutroDesc: "Match endings in the final 4 minutes with a cancelable countdown",
+      autoSkipOutroDesc: "Match endings in the final 6 minutes with a cancelable countdown",
       diagTitle: "Current title",
       work: "Title",
       workId: "Work ID",
@@ -217,7 +245,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "Test pure video frame",
       scan: "Rescan page",
       clear: "Delete opening/ending data for this title",
-      noticePrimary: "v2.2.0 limits opening scans to 3 minutes and adds ending learning, countdown skipping, same-episode multi-segment learning, and ±2 sec endpoint preview.",
+      noticePrimary: "v2.2.6 learns multiple visual anchors for each opening/ending instead of trusting a single first frame; single-frame legacy profiles should be relearned.",
       noticePrivacy: "Video frames and learning data stay on this device and are never uploaded to an external service.",
       notRead: "Not loaded",
       notDetected: "Not detected",
@@ -263,7 +291,21 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "Import complete: {works} titles, {intro} openings, and {outro} endings; duplicates were skipped.",
       importInvalid: "This is not a valid Bahamut opening/ending learning backup file.",
       importFail: "Opening/ending learning data import failed.",
-      learningBackupNote: "Back up and restore title names, work IDs, opening/ending frame fingerprints, preview images, and skip durations.",
+      learningBackupNote: "Back up and restore precise opening/ending anchors, start/end preview images, and skip durations.",
+      profileManagerTitle: "Saved segments",
+      introGroup: "Openings",
+      outroGroup: "Endings",
+      noProfiles: "None saved",
+      startFrame: "Start",
+      endFrame: "End",
+      noPreview: "No preview",
+      preciseProfile: "Precise anchor",
+      multiAnchorProfile: "Multi-frame · {count} anchors",
+      legacyProfile: "Single-frame legacy · relearn recommended",
+      deleteProfile: "Delete",
+      deletingProfile: "Deleting segment…",
+      profileDeleted: "Selected segment deleted.",
+      profileDeleteFail: "Could not delete the selected segment.",
       outroPending: "Countdown",
       outroSkipped: "✓ Skipped",
       outroNext: "✓ Next episode",
@@ -316,7 +358,7 @@ function formatBahamutText(key, values = {}) {
 const INTRO_BACKUP_FORMAT = "netflix-bahamut-auto-player/bahamut-intro-learning";
 const LEARNING_BACKUP_FORMAT = "netflix-bahamut-auto-player/bahamut-skip-learning";
 const INTRO_BACKUP_VERSION = 1;
-const LEARNING_BACKUP_VERSION = 2;
+const LEARNING_BACKUP_VERSION = 3;
 const INTRO_MAX_PROFILES_PER_WORK = 3;
 
 
@@ -472,6 +514,9 @@ function applyBahamutLanguage(lang) {
     exportLearning: "exportLearning",
     importLearning: "importLearning",
     learningBackupNote: "learningBackupNote",
+    profileManagerTitle: "profileManagerTitle",
+    introGroupTitle: "introGroup",
+    outroGroupTitle: "outroGroup",
     noticePrimary: "noticePrimary",
     noticePrivacy: "noticePrivacy",
     languageLabel: "language"
@@ -483,6 +528,7 @@ function applyBahamutLanguage(lang) {
   }
 
   $("bahamutStatusSub").textContent = getUnifiedText("subtitle");
+  if (platformStatus?.platform === "bahamut") renderProfileManager(platformStatus);
 }
 
 async function loadBahamutSettings() {
@@ -538,6 +584,10 @@ function bindBahamutSettings() {
   $("exportLearning").addEventListener("click", exportBahamutLearning);
   $("importLearning").addEventListener("click", () => $("importLearningFile").click());
   $("importLearningFile").addEventListener("change", handleBahamutLearningImport);
+  $("profileManager")?.addEventListener("click", (event) => {
+    const button = event.target?.closest?.(".profile-delete");
+    if (button) deleteBahamutProfile(button);
+  });
 }
 
 function setBahamutActionStatus(message) {
@@ -550,6 +600,118 @@ function renderFrameStatus(capability) {
   if (state === "blocked") return getBahamutText("blocked");
   if (state === "error") return getBahamutText("failed");
   return getBahamutText("waiting");
+}
+
+function formatClockTime(seconds) {
+  const value = Number(seconds);
+  if (!Number.isFinite(value) || value < 0) return "—";
+  const total = Math.round(value);
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function createPreviewNode(src, label) {
+  const wrap = document.createElement("div");
+  wrap.className = "profile-preview-cell";
+  const caption = document.createElement("span");
+  caption.textContent = label;
+  wrap.appendChild(caption);
+  if (typeof src === "string" && src.startsWith("data:image/")) {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = label;
+    wrap.appendChild(img);
+  } else {
+    const empty = document.createElement("div");
+    empty.className = "profile-preview-empty";
+    empty.textContent = getBahamutText("noPreview");
+    wrap.appendChild(empty);
+  }
+  return wrap;
+}
+
+function renderProfileGroup(containerId, profiles, kind) {
+  const container = $(containerId);
+  container.replaceChildren();
+  const list = Array.isArray(profiles) ? profiles : [];
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "profile-empty";
+    empty.textContent = getBahamutText("noProfiles");
+    container.appendChild(empty);
+    return;
+  }
+
+  list.forEach((profile, index) => {
+    const card = document.createElement("article");
+    card.className = `profile-card${profile?.legacy ? " is-legacy" : ""}`;
+
+    const top = document.createElement("div");
+    top.className = "profile-card-top";
+    const title = document.createElement("strong");
+    title.textContent = `${kind === "outro" ? getBahamutText("outroGroup") : getBahamutText("introGroup")} ${index + 1}`;
+    const badge = document.createElement("span");
+    badge.className = profile?.legacy ? "profile-badge legacy" : "profile-badge";
+    badge.textContent = profile?.legacy
+      ? getBahamutText("legacyProfile")
+      : formatBahamutText("multiAnchorProfile", { count: Number(profile?.anchorCount) || 0 });
+    top.append(title, badge);
+
+    const previews = document.createElement("div");
+    previews.className = "profile-preview-pair";
+    previews.append(
+      createPreviewNode(profile?.startPreviewDataUrl, getBahamutText("startFrame")),
+      createPreviewNode(profile?.endPreviewDataUrl, getBahamutText("endFrame"))
+    );
+
+    const meta = document.createElement("div");
+    meta.className = "profile-meta";
+    const end = Number(profile?.endTimeHint);
+    const duration = Number(profile?.duration);
+    const adjustment = Number(profile?.adjustmentSeconds) || 0;
+    const similarity = profile?.latestSimilarity == null ? null : Number(profile.latestSimilarity);
+    meta.textContent = `${formatClockTime(profile?.startTimeHint)} → ${Number.isFinite(end) ? formatClockTime(end) : "—"} · ${Number.isFinite(duration) ? duration.toFixed(1) : "—"}s · ${adjustment > 0 ? "+" : ""}${adjustment}s${Number.isFinite(similarity) ? ` · ${(similarity * 100).toFixed(1)}%` : ""}`;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "profile-delete";
+    button.textContent = getBahamutText("deleteProfile");
+    button.dataset.kind = kind;
+    button.dataset.profileId = profile?.id || "";
+    button.dataset.profileIndex = String(Number.isInteger(Number(profile?.index)) ? Number(profile.index) : index);
+
+    card.append(top, previews, meta, button);
+    container.appendChild(card);
+  });
+}
+
+function renderProfileManager(result) {
+  renderProfileGroup("introProfileList", result?.introProfiles, "intro");
+  renderProfileGroup("outroProfileList", result?.outroProfiles, "outro");
+}
+
+async function deleteBahamutProfile(button) {
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  setBahamutActionStatus(getBahamutText("deletingProfile"));
+  try {
+    const tab = activeTab || await getActiveTab();
+    const response = await extensionApi.tabs.sendMessage(tab.id, {
+      type: "delete-current-work-profile",
+      kind: button.dataset.kind,
+      profileId: button.dataset.profileId || null,
+      profileIndex: Number(button.dataset.profileIndex)
+    });
+    if (!response?.deleted) throw new Error(response?.reason || "DELETE_FAILED");
+    platformStatus = null;
+    await refreshBahamutStatus(tab);
+    setBahamutActionStatus(getBahamutText("profileDeleted"));
+  } catch (error) {
+    console.error("[Unified Popup] Bahamut profile delete failed:", error);
+    setBahamutActionStatus(getBahamutText("profileDeleteFail"));
+    button.disabled = false;
+  }
 }
 
 function renderBahamutDisconnected() {
@@ -568,6 +730,7 @@ function renderBahamutDisconnected() {
   $("outroMatchSimilarity").title = "";
   $("outroAutoSkipState").textContent = "—";
   $("clearLearning").disabled = true;
+  renderProfileManager({ introProfiles: [], outroProfiles: [] });
 }
 
 function renderBahamutStatus(result) {
@@ -614,6 +777,7 @@ function renderBahamutStatus(result) {
           ? getBahamutText("outroCancelled")
           : getBahamutText("notTriggered");
   $("clearLearning").disabled = !(introCount || outroCount);
+  renderProfileManager(result);
 }
 
 async function refreshBahamutStatus(tab = activeTab) {
@@ -622,8 +786,9 @@ async function refreshBahamutStatus(tab = activeTab) {
     const result = platformStatus?.platform === "bahamut"
       ? platformStatus
       : await extensionApi.tabs.sendMessage(tab.id, { type: "get-learning-status" });
-    renderBahamutStatus(result);
-    return result;
+    platformStatus = { platform: "bahamut", ...(result || {}) };
+    renderBahamutStatus(platformStatus);
+    return platformStatus;
   } catch (_error) {
     renderBahamutDisconnected();
     return null;
@@ -693,6 +858,7 @@ function sanitizeImportedProfile(profile, kind = "intro") {
   const fingerprints = Array.isArray(profile.fingerprints)
     ? [...new Set(profile.fingerprints.filter(isValidFingerprint))].slice(-10)
     : [];
+  if (isValidFingerprint(profile.startFingerprint) && !fingerprints.includes(profile.startFingerprint)) fingerprints.push(profile.startFingerprint);
   if (isValidFingerprint(profile.fingerprint) && !fingerprints.includes(profile.fingerprint)) fingerprints.push(profile.fingerprint);
   if (!fingerprints.length) return null;
 
@@ -701,31 +867,57 @@ function sanitizeImportedProfile(profile, kind = "intro") {
   const endTimeHint = Number(profile.endTimeHint);
   const adjustmentSeconds = Number(profile.adjustmentSeconds);
   if (!Number.isFinite(duration) || duration <= 1 || duration > 15 * 60) return null;
-  const previewDataUrl = typeof profile.previewDataUrl === "string" && profile.previewDataUrl.startsWith("data:image/")
-    ? profile.previewDataUrl
-    : null;
+
+  const image = (value) => typeof value === "string" && value.startsWith("data:image/") ? value : null;
+  const startFingerprint = isValidFingerprint(profile.startFingerprint)
+    ? profile.startFingerprint
+    : isValidFingerprint(profile.fingerprint) ? profile.fingerprint : fingerprints[0];
+  const endFingerprint = isValidFingerprint(profile.endFingerprint) ? profile.endFingerprint : null;
+  const precise = Number(profile.profileSchemaVersion) >= 2 && Array.isArray(profile.anchors) &&
+    profile.anchors.some((anchor) => isValidFingerprint(anchor?.fingerprint));
+  const anchors = precise
+    ? profile.anchors.filter((anchor) => isValidFingerprint(anchor?.fingerprint)).map((anchor) => ({
+        fingerprint: anchor.fingerprint,
+        offsetSeconds: Number.isFinite(Number(anchor.offsetSeconds)) ? Math.max(0, Number(anchor.offsetSeconds)) : 0
+      })).sort((a, b) => a.offsetSeconds - b.offsetSeconds).slice(0, 8)
+    : [];
+  const anchorVersion = precise ? Math.max(2, Math.min(3, Number(profile.anchorVersion) || (anchors.length >= 3 ? 3 : 2))) : 1;
+  const fingerprintVersion = precise ? Math.max(2, Math.min(3, Number(profile.fingerprintVersion) || (anchors.length >= 3 ? 3 : 2))) : 1;
+  const startPreviewDataUrl = image(profile.startPreviewDataUrl) || image(profile.previewDataUrl);
+  const endPreviewDataUrl = image(profile.endPreviewDataUrl);
 
   return {
     id: typeof profile.id === "string" && profile.id ? profile.id : `${kind}-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     kind,
+    profileSchemaVersion: precise ? Math.max(2, Number(profile.profileSchemaVersion) || 2) : 1,
+    anchorVersion,
     createdAt: Number.isFinite(Number(profile.createdAt)) ? Number(profile.createdAt) : Date.now(),
     duration: Number(duration.toFixed(3)),
     startTimeHint: Number.isFinite(startTimeHint) && startTimeHint >= 0 ? Number(startTimeHint.toFixed(3)) : 0,
     endTimeHint: Number.isFinite(endTimeHint) && endTimeHint >= 0 ? Number(endTimeHint.toFixed(3)) : undefined,
-    adjustmentSeconds: Number.isFinite(adjustmentSeconds) ? Math.max(-2, Math.min(2, adjustmentSeconds)) : 0,
-    fingerprint: fingerprints[fingerprints.length - 1],
-    fingerprints,
-    fingerprintVersion: 1,
-    previewDataUrl,
+    adjustmentSeconds: Number.isFinite(adjustmentSeconds) ? Number(adjustmentSeconds.toFixed(3)) : 0,
+    startFingerprint,
+    endFingerprint,
+    anchors,
+    fingerprint: startFingerprint,
+    fingerprints: precise ? anchors.map((anchor) => anchor.fingerprint) : fingerprints,
+    fingerprintVersion,
+    previewDataUrl: startPreviewDataUrl,
     previewWidth: Number.isFinite(Number(profile.previewWidth)) ? Number(profile.previewWidth) : 240,
     previewHeight: Number.isFinite(Number(profile.previewHeight)) ? Number(profile.previewHeight) : 135,
+    startPreviewDataUrl,
+    startPreviewWidth: Number.isFinite(Number(profile.startPreviewWidth)) ? Number(profile.startPreviewWidth) : 240,
+    startPreviewHeight: Number.isFinite(Number(profile.startPreviewHeight)) ? Number(profile.startPreviewHeight) : 135,
+    endPreviewDataUrl,
+    endPreviewWidth: Number.isFinite(Number(profile.endPreviewWidth)) ? Number(profile.endPreviewWidth) : 240,
+    endPreviewHeight: Number.isFinite(Number(profile.endPreviewHeight)) ? Number(profile.endPreviewHeight) : 135,
     sourceEpisodeUrl: typeof profile.sourceEpisodeUrl === "string" ? profile.sourceEpisodeUrl : ""
   };
 }
 
 function profileSignature(profile) {
   const fingerprints = Array.isArray(profile?.fingerprints) ? profile.fingerprints : [];
-  return `${profile?.fingerprint || fingerprints[0] || ""}|${Number(profile?.duration || 0).toFixed(1)}|${Number(profile?.startTimeHint || 0).toFixed(1)}`;
+  return `${profile?.startFingerprint || profile?.fingerprint || fingerprints[0] || ""}|${Number(profile?.duration || 0).toFixed(1)}|${Number(profile?.startTimeHint || 0).toFixed(1)}`;
 }
 
 function sanitizeImportedWorks(rawWorks, kind = "intro") {

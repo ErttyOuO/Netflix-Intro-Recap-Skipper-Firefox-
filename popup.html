@@ -87,15 +87,15 @@
           <label class="toggle bahamut-toggle"><input id="introLearning" type="checkbox"><span class="slider"></span></label>
         </div>
         <div class="setting-item">
-          <div class="setting-copy"><span id="autoSkipTitle" class="setting-label">自動跳過已學習片頭</span><span id="autoSkipDesc" class="setting-note">只在影片前 3 分鐘辨識；成功一次後本集停止片頭偵測</span></div>
+          <div class="setting-copy"><span id="autoSkipTitle" class="setting-label">自動跳過已學習片頭</span><span id="autoSkipDesc" class="setting-note">只在影片前 10 分鐘辨識；成功一次後本集停止片頭偵測</span></div>
           <label class="toggle bahamut-toggle"><input id="autoSkipIntro" type="checkbox"><span class="slider"></span></label>
         </div>
         <div class="setting-item">
-          <div class="setting-copy"><span id="outroLearningTitle" class="setting-label">片尾快轉學習</span><span id="outroLearningDesc" class="setting-note">影片最後 4 分鐘的人工快轉可記錄為片尾</span></div>
+          <div class="setting-copy"><span id="outroLearningTitle" class="setting-label">片尾快轉學習</span><span id="outroLearningDesc" class="setting-note">影片最後 6 分鐘的人工快轉可記錄為片尾</span></div>
           <label class="toggle bahamut-toggle"><input id="outroLearning" type="checkbox"><span class="slider"></span></label>
         </div>
         <div class="setting-item">
-          <div class="setting-copy"><span id="autoSkipOutroTitle" class="setting-label">自動跳過已學習片尾</span><span id="autoSkipOutroDesc" class="setting-note">最後 4 分鐘辨識片尾；可取消倒數並繼續觀看</span></div>
+          <div class="setting-copy"><span id="autoSkipOutroTitle" class="setting-label">自動跳過已學習片尾</span><span id="autoSkipOutroDesc" class="setting-note">最後 6 分鐘辨識片尾；可取消倒數並繼續觀看</span></div>
           <label class="toggle bahamut-toggle"><input id="autoSkipOutro" type="checkbox"><span class="slider"></span></label>
         </div>
       </section>
@@ -114,6 +114,18 @@
         <div class="diag-row"><span id="outroAutoSkipStateLabel">本集片尾動作</span><strong id="outroAutoSkipState">尚未觸發</strong></div>
       </section>
 
+      <section id="profileManager" class="profile-manager" aria-label="Saved opening and ending profiles">
+        <div id="profileManagerTitle" class="section-title">已儲存片段</div>
+        <div class="profile-group">
+          <div id="introGroupTitle" class="profile-group-title">片頭</div>
+          <div id="introProfileList" class="profile-list"></div>
+        </div>
+        <div class="profile-group">
+          <div id="outroGroupTitle" class="profile-group-title">片尾</div>
+          <div id="outroProfileList" class="profile-list"></div>
+        </div>
+      </section>
+
       <div class="button-grid">
         <button id="testFrame" class="primary-soft" type="button">測試純影片影格</button>
         <button id="scanNow" class="secondary" type="button">重新掃描頁面</button>
@@ -130,7 +142,7 @@
       <div id="bahamutActionStatus" class="action-status" role="status" aria-live="polite"></div>
 
       <section class="bahamut-notice">
-        <p id="noticePrimary">v2.2.0：片頭只掃描前 3 分鐘；新增片尾學習、倒數跳過、同集多段學習與 ±2 秒結束點預覽。</p>
+        <p id="noticePrimary">v2.2.6：片頭／片尾改用多影格錨點學習；舊的單影格 Profile 建議重新學習。</p>
       </section>
 
       <footer class="language-footer">

@@ -4,7 +4,7 @@
   const extensionApi = globalThis.browser || globalThis.chrome;
   if (!extensionApi) return;
 
-  // v2.2.0 unified extension - opening/ending learning, bounded detection windows, and timeline endpoint preview.
+  // v2.2.6 unified extension - multi-anchor visual learning, safer matching, profile diagnostics, and the existing 3-minute opening-seek guard.
 
   const DEFAULT_SETTINGS = Object.freeze({
     autoAgree: true,
@@ -28,20 +28,22 @@
       loadedFrame: "影片已載入，準備測試純影格讀取",
       playerFound: "已找到播放器，等待讀取影片影格",
       candidateAria: "片頭快轉學習確認",
-      previewAlt: "快轉前的純影片畫面",
+      previewAlt: "片段入點的純影片畫面",
+      endPreviewAlt: "片段結束點的純影片畫面",
       previewUnavailable: "無法讀取純影片影格",
       candidateEyebrow: "偵測到一次較長快轉",
       candidateTitle: "要儲存為這部作品的片頭嗎？",
       capabilityOk: "已取得純影片畫面，可用於未來視覺辨識。",
       capabilityBlocked: "動畫瘋目前的影片來源觸發 CORS 限制；這次只偵測到快轉時間，暫不允許儲存為自動辨識資料。",
-      capabilityMissing: "快轉前沒有取得有效影格；這次暫不允許儲存。",
+      capabilityMissing: "沒有取得足夠精確的片段入點影格；為避免把前一段劇情誤存成片頭／片尾，這次不允許儲存。",
+      capabilityUninformative: "入點畫面資訊較少；儲存時會自動再擷取片段開始後的多張影格，只有取得足夠辨識特徵才會真正儲存。",
       saveIntro: "儲存片頭資料",
-      skipOnce: "略過這次",
+      skipEpisode: "略過本集",
       askLater: "稍後再問",
       compactNewOpening: "發現可能的新片頭，要新增嗎？",
       compactSimilarOpening: "這次快轉像片頭 {index}，要更新嗎？",
       compactFullOpening: "已儲存 3 組片頭，要取代片頭 {index} 嗎？",
-      saving: "儲存中…",
+      saving: "正在建立多影格特徵…",
       savedTitle: "已儲存這部作品的片頭學習資料",
       saveRetry: "儲存失敗，再試一次",
       skipLabel: "跳過 {duration}",
@@ -77,11 +79,12 @@
       outroCountdownNext: "即將到下一集",
       continueOutro: "繼續觀看片尾",
       endAdjustLabel: "片段結束點",
-      endAdjustHelp: "按下 ±2 秒會同步移動動畫瘋播放器時間軸，確認是否切得剛好。",
+      endAdjustHelp: "可重複按 ±2 秒；每次都會累加並同步移動動畫瘋播放器時間軸，再確認是否切得剛好。",
       originalEnd: "原位置",
       adjustMinus2: "−2 秒",
       adjustPlus2: "+2 秒",
       previewEnd: "預覽結束點 {time}",
+      adjustmentTotal: "目前調整 {offset} 秒",
       close: "關閉"
     },
     "zh-CN": {
@@ -95,20 +98,22 @@
       loadedFrame: "影片已载入，准备测试纯影格读取",
       playerFound: "已找到播放器，等待读取影片影格",
       candidateAria: "片头快转学习确认",
-      previewAlt: "快转前的纯影片画面",
+      previewAlt: "片段入点的纯影片画面",
+      endPreviewAlt: "片段结束点的纯影片画面",
       previewUnavailable: "无法读取纯影片影格",
       candidateEyebrow: "侦测到一次较长快转",
       candidateTitle: "要储存为这部作品的片头吗？",
       capabilityOk: "已取得纯影片画面，可用于未来视觉辨识。",
       capabilityBlocked: "动画疯目前的影片来源触发 CORS 限制；这次只侦测到快转时间，暂不允许储存为自动辨识资料。",
-      capabilityMissing: "快转前没有取得有效影格；这次暂不允许储存。",
+      capabilityMissing: "没有取得足够精确的片段入点影格；为避免把前一段剧情误存成片头／片尾，这次不允许储存。",
+      capabilityUninformative: "入点画面资讯较少；储存时会自动再截取片段开始后的多张影格，只有取得足够辨识特征才会真正储存。",
       saveIntro: "储存片头资料",
-      skipOnce: "略过这次",
+      skipEpisode: "略过本集",
       askLater: "稍后再问",
       compactNewOpening: "发现可能的新片头，要新增吗？",
       compactSimilarOpening: "这次快转像片头 {index}，要更新吗？",
       compactFullOpening: "已储存 3 组片头，要取代片头 {index} 吗？",
-      saving: "储存中…",
+      saving: "正在建立多影格特征…",
       savedTitle: "已储存这部作品的片头学习资料",
       saveRetry: "储存失败，再试一次",
       skipLabel: "跳过 {duration}",
@@ -144,11 +149,12 @@
       outroCountdownNext: "即将到下一集",
       continueOutro: "继续观看片尾",
       endAdjustLabel: "片段结束点",
-      endAdjustHelp: "按下 ±2 秒会同步移动动画疯播放器时间轴，确认是否切得刚好。",
+      endAdjustHelp: "可重复按 ±2 秒；每次都会累加并同步移动动画疯播放器时间轴，再确认是否切得刚好。",
       originalEnd: "原位置",
       adjustMinus2: "−2 秒",
       adjustPlus2: "+2 秒",
       previewEnd: "预览结束点 {time}",
+      adjustmentTotal: "当前调整 {offset} 秒",
       close: "关闭"
     },
     en: {
@@ -162,20 +168,22 @@
       loadedFrame: "Video loaded; preparing frame capture test",
       playerFound: "Player found; waiting for readable video frames",
       candidateAria: "Opening skip learning confirmation",
-      previewAlt: "Pure video frame before the seek",
+      previewAlt: "Pure video frame at the segment start",
+      endPreviewAlt: "Pure video frame at the segment endpoint",
       previewUnavailable: "Unable to read a pure video frame",
       candidateEyebrow: "Long forward seek detected",
       candidateTitle: "Save this as the opening for this title?",
       capabilityOk: "A pure video frame was captured and can be used for future visual matching.",
       capabilityBlocked: "This video source is blocked by CORS. The seek duration was detected, but it cannot be saved for automatic visual matching.",
-      capabilityMissing: "No valid frame was available before the seek, so this one cannot be saved.",
+      capabilityMissing: "No sufficiently precise start frame was captured. To avoid learning story footage before the opening/ending, this seek cannot be saved.",
+      capabilityUninformative: "The start frame has little visual detail. Saving will sample several post-start frames and will only succeed if enough reliable anchors are captured.",
       saveIntro: "Save opening",
-      skipOnce: "Ignore this seek",
+      skipEpisode: "Skip this episode",
       askLater: "Ask later",
       compactNewOpening: "Possible new opening found. Add it?",
       compactSimilarOpening: "This seek looks like opening {index}. Update it?",
       compactFullOpening: "Three openings are saved. Replace opening {index}?",
-      saving: "Saving…",
+      saving: "Learning visual anchors…",
       savedTitle: "Opening learning data saved for this title",
       saveRetry: "Save failed — try again",
       skipLabel: "Skip {duration}",
@@ -211,11 +219,12 @@
       outroCountdownNext: "Next episode soon",
       continueOutro: "Keep watching ending",
       endAdjustLabel: "Segment end point",
-      endAdjustHelp: "Press ±2 sec to move the Bahamut player timeline to that endpoint and verify the cut.",
+      endAdjustHelp: "Press ±2 sec repeatedly to accumulate the adjustment and move the Bahamut player timeline to the proposed endpoint.",
       originalEnd: "Original",
       adjustMinus2: "−2 sec",
       adjustPlus2: "+2 sec",
       previewEnd: "Preview endpoint {time}",
+      adjustmentTotal: "Current adjustment {offset} sec",
       close: "Close"
     }
   });
@@ -231,21 +240,33 @@
   const SAME_BUTTON_COOLDOWN_MS = 5000;
   const FALLBACK_SCAN_MS = 1200;
   const VIDEO_SCAN_MS = 1500;
-  // v2.2.0: automatic opening matching is intentionally limited to the first
-  // 3 minutes. Ending matching runs only in the final 4 minutes of the video.
-  const FRAME_SAMPLE_MS = 240;
+  // v2.2.2: automatic opening matching is intentionally limited to the first
+  // 10 minutes. Ending matching runs only in the final 6 minutes of the video.
+  const FRAME_SAMPLE_MS = 180;
   const LEARNING_SAMPLE_MS = 1000;
-  const INTRO_SCAN_END_SECONDS = 3 * 60;
-  const OUTRO_SCAN_LEAD_SECONDS = 4 * 60;
-  const OUTRO_SCAN_FALLBACK_START_SECONDS = 20 * 60;
+  const INTRO_SCAN_END_SECONDS = 10 * 60;
+  // v2.2.5: an opening seek larger than 3 minutes is treated as ordinary navigation,
+  // not as an opening-learning gesture. Exactly 3 minutes is still allowed.
+  const INTRO_MAX_LEARN_SKIP_SECONDS = 3 * 60;
+  const OUTRO_SCAN_LEAD_SECONDS = 6 * 60;
+  const OUTRO_SCAN_FALLBACK_START_SECONDS = 18 * 60;
   const OUTRO_NEAR_END_SECONDS = 5;
   const OUTRO_NEXT_COUNTDOWN_SECONDS = 4;
   const OUTRO_SKIP_COUNTDOWN_SECONDS = 2;
   const SEEK_SETTLE_MS = 1500;
   const CANDIDATE_LIFETIME_MS = 5000;
   const MAX_PROFILES_PER_WORK = 3;
-  const FRAME_HISTORY_MS = 2400;
-  const FRAME_HISTORY_MAX = 10;
+  // v2.2.4: learning profiles must anchor to the actual pre-seek frame.
+  // A frame farther away than this is rejected instead of silently learning story footage.
+  const PRECISE_START_FRAME_TOLERANCE_SECONDS = 0.45;
+  const INTERACTION_FRAME_MAX_AGE_MS = 8000;
+  const PROFILE_SCHEMA_VERSION = 2;
+  // v2.2.6: one exact start frame is too fragile for animation transitions.
+  // New profiles learn several frames from the first six seconds after the user-selected start.
+  const PROFILE_ANCHOR_VERSION = 3;
+  const PROFILE_ANCHOR_OFFSETS_SECONDS = Object.freeze([0, 1.2, 2.4, 3.6, 4.8, 6.0]);
+  const PROFILE_MIN_RELIABLE_ANCHORS = 3;
+  const PROFILE_ANCHOR_SEEK_TIMEOUT_MS = 1600;
 
   // Multi-level visual matching. The bounded search windows make the softer
   // vote tier safe without relying on a fixed learned timestamp.
@@ -273,7 +294,8 @@
   let activeVideo = null;
   let lastStableTime = null;
   let lastFrame = null;
-  let frameHistory = [];
+  let pendingSeekStartFrame = null;
+  let pendingSeekStartCapturedAt = 0;
   let seekSession = null;
   let seekSettleTimer = null;
   let frameCapability = {
@@ -292,6 +314,8 @@
   let introProfilesCache = { workKey: null, entry: null, loadedAt: 0 };
   let outroProfilesCache = { workKey: null, entry: null, loadedAt: 0 };
   let matcherBusy = false;
+  let trainingCaptureBusy = false;
+  let trainingCaptureGeneration = 0;
   let matchVotes = new Map();
   let outroMatchVotes = new Map();
   let autoSkipPerformedEpisodeKey = null;
@@ -300,8 +324,10 @@
   let suppressLearningUntil = 0;
   let lastAutoSkip = null;
   let lastMatchProbe = null;
+  let lastMatchByProfile = new Map();
   let lastOutroAction = null;
   let lastOutroMatchProbe = null;
+  let lastOutroMatchByProfile = new Map();
   let promptHistoryCache = null;
   let outroCountdownCard = null;
   let outroCountdownTimer = null;
@@ -581,25 +607,66 @@
     }
   }
 
-  function addFrameToHistory(frame) {
-    if (!frame?.fingerprint) return;
-    frameHistory.push(frame);
-    const cutoff = performance.now() - FRAME_HISTORY_MS;
-    frameHistory = frameHistory
-      .filter((item) => item.capturedAt >= cutoff)
-      .slice(-FRAME_HISTORY_MAX);
+  function copyFrame(frame) {
+    if (!frame?.fingerprint) return null;
+    return {
+      mediaTime: Number(frame.mediaTime),
+      capturedAt: Number(frame.capturedAt) || performance.now(),
+      fingerprint: frame.fingerprint,
+      previewDataUrl: frame.previewDataUrl || null,
+      width: Number(frame.width) || 240,
+      height: Number(frame.height) || 135
+    };
   }
 
-  function uniqueFingerprints(frames) {
-    const seen = new Set();
-    const result = [];
-    for (const frame of frames || []) {
-      const fingerprint = frame?.fingerprint;
-      if (!fingerprint || seen.has(fingerprint)) continue;
-      seen.add(fingerprint);
-      result.push(fingerprint);
+  function helperUiOwnsTarget(target) {
+    return Boolean(target && typeof target.closest === "function" && target.closest(
+      ".bahamut-helper-candidate, .bahamut-helper-outro-countdown, .bahamut-helper-toast"
+    ));
+  }
+
+  function capturePotentialSeekStart() {
+    if (!activeVideo || performance.now() < suppressLearningUntil) return null;
+    if (activeVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return null;
+    const kind = classifyLearningKind(activeVideo.currentTime, activeVideo);
+    if (!kind) return null;
+    const frame = captureVideoFrame(activeVideo, { withPreview: true });
+    if (!frame) return null;
+    pendingSeekStartFrame = copyFrame(frame);
+    pendingSeekStartCapturedAt = performance.now();
+    // Use the exact captured frame time as the stable pre-seek time.
+    lastStableTime = Number(frame.mediaTime);
+    return pendingSeekStartFrame;
+  }
+
+  function handlePotentialSeekPointerDown(event) {
+    if (event?.button != null && event.button !== 0) return;
+    if (helperUiOwnsTarget(event?.target)) return;
+    capturePotentialSeekStart();
+  }
+
+  function handlePotentialSeekKeyDown(event) {
+    if (helperUiOwnsTarget(event?.target)) return;
+    const key = String(event?.key || "");
+    if (!["ArrowLeft", "ArrowRight", "j", "J", "l", "L", "Home", "End"].includes(key)) return;
+    capturePotentialSeekStart();
+  }
+
+  function takePreciseSeekStartFrame(fromTime) {
+    const now = performance.now();
+    let frame = null;
+    if (pendingSeekStartFrame && now - pendingSeekStartCapturedAt <= INTERACTION_FRAME_MAX_AGE_MS) {
+      const delta = Math.abs(Number(pendingSeekStartFrame.mediaTime) - Number(fromTime));
+      if (Number.isFinite(delta) && delta <= PRECISE_START_FRAME_TOLERANCE_SECONDS) frame = copyFrame(pendingSeekStartFrame);
     }
-    return result;
+    pendingSeekStartFrame = null;
+    pendingSeekStartCapturedAt = 0;
+
+    if (!frame && lastFrame?.fingerprint) {
+      const delta = Math.abs(Number(lastFrame.mediaTime) - Number(fromTime));
+      if (Number.isFinite(delta) && delta <= PRECISE_START_FRAME_TOLERANCE_SECONDS) frame = copyFrame(lastFrame);
+    }
+    return frame;
   }
 
   function hammingSimilarity(a, b) {
@@ -624,22 +691,195 @@
     return ratio >= 0.12 && ratio <= 0.88;
   }
 
-  function getProfileFingerprints(profile) {
-    const fingerprints = Array.isArray(profile?.fingerprints)
-      ? profile.fingerprints.filter(isInformativeFingerprint)
-      : [];
-    if (isInformativeFingerprint(profile?.fingerprint)) {
-      fingerprints.push(profile.fingerprint);
+  function getAutoMatchAnchors(profile) {
+    // Legacy profiles may contain frames from up to ~3 seconds before the real opening/ending.
+    // They remain visible/deletable/importable, but are intentionally not trusted for auto-skip.
+    const schemaVersion = Number(profile?.profileSchemaVersion);
+    if (!Number.isFinite(schemaVersion) || schemaVersion < PROFILE_SCHEMA_VERSION) return [];
+    const anchors = Array.isArray(profile?.anchors) ? profile.anchors : [];
+    const output = [];
+    for (const anchor of anchors) {
+      if (!isInformativeFingerprint(anchor?.fingerprint)) continue;
+      const offsetSeconds = Number(anchor?.offsetSeconds);
+      output.push({
+        fingerprint: anchor.fingerprint,
+        offsetSeconds: Number.isFinite(offsetSeconds) ? Math.max(0, offsetSeconds) : 0
+      });
     }
-    return [...new Set(fingerprints)];
+    if (!output.length && isInformativeFingerprint(profile?.startFingerprint)) {
+      output.push({ fingerprint: profile.startFingerprint, offsetSeconds: 0 });
+    }
+    return output;
   }
 
-  function bestSimilarity(frameFingerprint, profile) {
-    let best = 0;
-    for (const saved of getProfileFingerprints(profile)) {
-      best = Math.max(best, hammingSimilarity(frameFingerprint, saved));
+  function bestAutoMatch(frameFingerprint, profile) {
+    let best = { similarity: 0, anchorOffsetSeconds: 0 };
+    for (const anchor of getAutoMatchAnchors(profile)) {
+      const similarity = hammingSimilarity(frameFingerprint, anchor.fingerprint);
+      if (similarity > best.similarity) best = { similarity, anchorOffsetSeconds: anchor.offsetSeconds };
     }
     return best;
+  }
+
+  function profileAnchorStats(profile) {
+    const anchors = getAutoMatchAnchors(profile);
+    return {
+      count: anchors.length,
+      version: Number(profile?.anchorVersion) || 0,
+      reliable: (Number(profile?.anchorVersion) || 0) >= PROFILE_ANCHOR_VERSION && anchors.length >= PROFILE_MIN_RELIABLE_ANCHORS
+    };
+  }
+
+  function waitMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+  }
+
+  function waitForRenderedVideoFrame(video, timeoutMs = 260) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      const timeoutId = setTimeout(finish, timeoutMs);
+      const complete = () => {
+        clearTimeout(timeoutId);
+        finish();
+      };
+      try {
+        if (typeof video?.requestVideoFrameCallback === "function") {
+          video.requestVideoFrameCallback(() => complete());
+          return;
+        }
+      } catch (_) {}
+      requestAnimationFrame(() => requestAnimationFrame(complete));
+    });
+  }
+
+  async function seekVideoForAnchorCapture(video, targetTime, captureToken) {
+    if (!video || captureToken !== trainingCaptureGeneration) return false;
+    const duration = Number(video.duration);
+    const max = Number.isFinite(duration) && duration > 0 ? Math.max(0, duration - 0.15) : Number.POSITIVE_INFINITY;
+    const target = clamp(Number(targetTime) || 0, 0, max);
+
+    if (Math.abs(Number(video.currentTime) - target) <= 0.06 && !video.seeking) {
+      await waitForRenderedVideoFrame(video);
+      return captureToken === trainingCaptureGeneration;
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const cleanup = () => {
+        clearTimeout(timeoutId);
+        video.removeEventListener?.("seeked", onSeeked);
+      };
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(Boolean(ok));
+      };
+      const onSeeked = async () => {
+        if (captureToken !== trainingCaptureGeneration) return finish(false);
+        if (Math.abs(Number(video.currentTime) - target) > 0.35) return;
+        await waitForRenderedVideoFrame(video);
+        finish(captureToken === trainingCaptureGeneration);
+      };
+      const timeoutId = setTimeout(() => finish(false), PROFILE_ANCHOR_SEEK_TIMEOUT_MS);
+      video.addEventListener?.("seeked", onSeeked);
+      try {
+        video.currentTime = target;
+      } catch (_) {
+        finish(false);
+      }
+    });
+  }
+
+  async function collectCandidateLearningAnchors(candidate) {
+    if (!candidate?.work || !Number.isFinite(Number(candidate.fromTime))) return [];
+    if (Array.isArray(candidate.learnedAnchors) && candidate.learnedAnchors.length >= PROFILE_MIN_RELIABLE_ANCHORS) {
+      return candidate.learnedAnchors
+        .filter((anchor) => isInformativeFingerprint(anchor?.fingerprint))
+        .map((anchor) => ({ fingerprint: anchor.fingerprint, offsetSeconds: Math.max(0, Number(anchor.offsetSeconds) || 0) }))
+        .slice(0, PROFILE_ANCHOR_OFFSETS_SECONDS.length);
+    }
+
+    const anchors = [];
+    const pushFrame = (frame, expectedOffset) => {
+      if (!frame?.fingerprint || !isInformativeFingerprint(frame.fingerprint)) return;
+      const actualOffset = Number(frame.mediaTime) - Number(candidate.fromTime);
+      const offset = Number.isFinite(actualOffset) && actualOffset >= -0.35
+        ? Math.max(0, actualOffset)
+        : Math.max(0, Number(expectedOffset) || 0);
+      anchors.push({
+        fingerprint: frame.fingerprint,
+        offsetSeconds: Number(offset.toFixed(3))
+      });
+    };
+
+    const originalStart = candidate.startFrame?.fingerprint ? copyFrame(candidate.startFrame) : candidate.frame?.fingerprint ? copyFrame(candidate.frame) : null;
+    if (originalStart && Math.abs(Number(originalStart.mediaTime) - Number(candidate.fromTime)) <= PRECISE_START_FRAME_TOLERANCE_SECONDS) {
+      pushFrame(originalStart, 0);
+    }
+
+    const video = activeVideo;
+    if (!video || identifyWork().episodeKey !== candidate.work.episodeKey || identifyWork().key !== candidate.work.key) {
+      return anchors;
+    }
+
+    const captureToken = ++trainingCaptureGeneration;
+    const wasPaused = Boolean(video.paused);
+    const restoreTime = Number(candidate.toTime);
+    trainingCaptureBusy = true;
+    stopFrameSampler();
+    suppressLearningUntil = performance.now() + 20000;
+    seekSession = null;
+    if (seekSettleTimer !== null) {
+      clearTimeout(seekSettleTimer);
+      seekSettleTimer = null;
+    }
+
+    try {
+      try { video.pause?.(); } catch (_) {}
+      const maxOffset = Math.max(0, Math.min(6, Number(candidate.duration) - 1));
+      for (const offset of PROFILE_ANCHOR_OFFSETS_SECONDS) {
+        if (captureToken !== trainingCaptureGeneration) break;
+        if (offset > maxOffset + 0.001) continue;
+        if (offset === 0 && anchors.some((anchor) => anchor.offsetSeconds <= 0.35)) continue;
+        const ok = await seekVideoForAnchorCapture(video, Number(candidate.fromTime) + offset, captureToken);
+        if (!ok || captureToken !== trainingCaptureGeneration) continue;
+        const frame = captureVideoFrame(video, { withPreview: offset === 0 && !originalStart });
+        if (frame) {
+          if (offset === 0 && (!candidate.startFrame?.fingerprint || !isInformativeFingerprint(candidate.startFrame.fingerprint))) {
+            candidate.startFrame = copyFrame(frame);
+            candidate.frame = copyFrame(frame);
+          }
+          pushFrame(frame, offset);
+        }
+      }
+    } finally {
+      if (captureToken === trainingCaptureGeneration && video && identifyWork().episodeKey === candidate.work.episodeKey) {
+        await seekVideoForAnchorCapture(video, restoreTime, captureToken);
+        captureCandidateEndFrameNow(candidate);
+        if (!wasPaused) {
+          try { await video.play?.(); } catch (_) {}
+        }
+      }
+      if (captureToken === trainingCaptureGeneration) {
+        trainingCaptureBusy = false;
+        suppressLearningUntil = performance.now() + 1800;
+        updateFrameSamplerState({ sampleNow: true });
+      }
+    }
+
+    // Keep temporal order and cap the payload to the planned learning samples.
+    const learned = anchors
+      .filter((anchor) => isInformativeFingerprint(anchor.fingerprint))
+      .sort((a, b) => a.offsetSeconds - b.offsetSeconds)
+      .slice(0, PROFILE_ANCHOR_OFFSETS_SECONDS.length);
+    if (learned.length >= PROFILE_MIN_RELIABLE_ANCHORS) candidate.learnedAnchors = learned.map((anchor) => ({ ...anchor }));
+    return learned;
   }
 
   function isIntroWindowAt(currentTime) {
@@ -724,14 +964,15 @@
   async function candidateAlreadyHandled(candidate) {
     const history = await getPromptHistory(false);
     const items = Array.isArray(history[promptEpisodeId(candidate.work)]) ? history[promptEpisodeId(candidate.work)] : [];
-    return items.some((item) =>
-      item?.kind === candidate.kind &&
-      Math.abs(Number(item.fromTime) - Number(candidate.fromTime)) <= 3 &&
-      Math.abs(Number(item.originalToTime) - Number(candidate.originalToTime ?? candidate.toTime)) <= 3
-    );
+    return items.some((item) => {
+      if (item?.kind !== candidate.kind) return false;
+      if (item?.suppressKindForEpisode === true) return true;
+      return Math.abs(Number(item.fromTime) - Number(candidate.fromTime)) <= 3 &&
+        Math.abs(Number(item.originalToTime) - Number(candidate.originalToTime ?? candidate.toTime)) <= 3;
+    });
   }
 
-  async function recordCandidateHandled(candidate, status) {
+  async function recordCandidateHandled(candidate, status, { suppressKindForEpisode = false } = {}) {
     if (!candidate?.work || !candidate?.kind) return;
     const history = { ...(await getPromptHistory(false)) };
     const id = promptEpisodeId(candidate.work);
@@ -741,6 +982,7 @@
       fromTime: Number(candidate.fromTime || 0),
       originalToTime: Number(candidate.originalToTime ?? candidate.toTime ?? 0),
       status,
+      suppressKindForEpisode: Boolean(suppressKindForEpisode),
       at: Date.now()
     });
     history[id] = items.slice(-12);
@@ -758,14 +1000,19 @@
     outroActionStatus = null;
     lastAutoSkip = null;
     lastMatchProbe = null;
+    lastMatchByProfile = new Map();
     lastOutroAction = null;
     lastOutroMatchProbe = null;
+    lastOutroMatchByProfile = new Map();
     promptHistoryCache = null;
+    trainingCaptureGeneration += 1;
+    trainingCaptureBusy = false;
     removeOutroCountdown();
   }
 
   function evaluateProfileMatch(frameFingerprint, profile, voteMap, now) {
-    const similarity = bestSimilarity(frameFingerprint, profile);
+    const anchorMatch = bestAutoMatch(frameFingerprint, profile);
+    const similarity = anchorMatch.similarity;
     const profileId = profile.id || `${profile.createdAt || 0}:${profile.startTimeHint || 0}`;
     const previous = voteMap.get(profileId);
     const stillInWindow = previous && now - previous.lastAt <= AUTO_MATCH_CONFIRM_WINDOW_MS;
@@ -795,11 +1042,31 @@
       bestVote = 0;
     }
 
-    return { similarity, profileId, voteScore, hitCount, bestVote, matchLevel, shouldTrigger };
+    return {
+      similarity, profileId, voteScore, hitCount, bestVote, matchLevel, shouldTrigger,
+      anchorOffsetSeconds: anchorMatch.anchorOffsetSeconds,
+      preciseProfile: getAutoMatchAnchors(profile).length > 0
+    };
+  }
+
+  function chooseBestTriggeredProfile(triggered) {
+    if (!Array.isArray(triggered) || !triggered.length) return null;
+    return [...triggered].sort((a, b) =>
+      Number(b?.result?.similarity || 0) - Number(a?.result?.similarity || 0) ||
+      Number(b?.result?.voteScore || 0) - Number(a?.result?.voteScore || 0) ||
+      Number(b?.result?.hitCount || 0) - Number(a?.result?.hitCount || 0)
+    )[0] || null;
+  }
+
+  function remainingSkipDuration(profileDuration, anchorOffsetSeconds = 0) {
+    const duration = Number(profileDuration);
+    const offset = Math.max(0, Number(anchorOffsetSeconds) || 0);
+    if (!Number.isFinite(duration) || duration <= 0) return 0;
+    return Math.max(1, duration - offset);
   }
 
   async function maybeAutoSkipIntro(frame) {
-    if (!settings.autoSkipIntro || !frame?.fingerprint || !activeVideo || activeVideo.paused) return;
+    if (!settings.autoSkipIntro || trainingCaptureBusy || !frame?.fingerprint || !activeVideo || activeVideo.paused) return;
     if (activeVideo.seeking || matcherBusy) return;
     if (!isIntroWindowAt(activeVideo.currentTime)) return;
 
@@ -814,10 +1081,16 @@
 
       const now = performance.now();
       let bestProbe = null;
+      const triggered = [];
       for (const profile of profiles) {
         const duration = Number(profile?.duration);
         if (!Number.isFinite(duration) || duration <= 0) continue;
         const result = evaluateProfileMatch(frame.fingerprint, profile, matchVotes, now);
+        lastMatchByProfile.set(result.profileId, {
+          at: Date.now(), mediaTime: Number(activeVideo.currentTime.toFixed(3)),
+          similarity: Number(result.similarity.toFixed(4)), matchLevel: result.matchLevel,
+          voteScore: result.voteScore, hitCount: result.hitCount
+        });
 
         if (!bestProbe || result.similarity > bestProbe.similarity) {
           bestProbe = {
@@ -827,38 +1100,44 @@
             matchLevel: result.matchLevel, voteScore: result.voteScore, hitCount: result.hitCount,
             requiredScore: AUTO_MATCH_REQUIRED_SCORE, requiredHits: AUTO_MATCH_REQUIRED_HITS,
             sampleIntervalMs: frameSampleIntervalMs || FRAME_SAMPLE_MS,
-            scanWindow: `0-${INTRO_SCAN_END_SECONDS}`
+            scanWindow: `0-${INTRO_SCAN_END_SECONDS}`,
+            preciseProfile: result.preciseProfile
           };
         }
-        if (!result.shouldTrigger) continue;
-
-        const from = activeVideo.currentTime;
-        let to = from + duration;
-        if (Number.isFinite(activeVideo.duration) && activeVideo.duration > 0) {
-          to = Math.min(to, Math.max(0, activeVideo.duration - 0.15));
-        }
-        if (!(to > from + 1)) return;
-
-        autoSkipPerformedEpisodeKey = work.episodeKey;
-        suppressLearningUntil = performance.now() + AUTO_SKIP_SUPPRESS_LEARNING_MS;
-        seekSession = null;
-        if (seekSettleTimer !== null) {
-          clearTimeout(seekSettleTimer);
-          seekSettleTimer = null;
-        }
-
-        activeVideo.currentTime = to;
-        lastAutoSkip = {
-          at: Date.now(), workKey: work.key, episodeKey: work.episodeKey,
-          fromTime: from, toTime: to, duration,
-          similarity: Number(result.similarity.toFixed(4)), profileId: result.profileId,
-          matchLevel: result.matchLevel, voteScore: result.voteScore, hitCount: result.hitCount
-        };
-        showToast(t("autoSkipped", { duration: formatDuration(duration) }));
-        updateFrameSamplerState();
-        break;
+        if (result.shouldTrigger && result.preciseProfile) triggered.push({ profile, duration, result });
       }
       if (bestProbe) lastMatchProbe = bestProbe;
+      if (!triggered.length) return;
+
+      // Never let storage order decide which of several profiles wins.
+      const chosen = chooseBestTriggeredProfile(triggered);
+      if (!chosen) return;
+      const from = activeVideo.currentTime;
+      const remainingDuration = remainingSkipDuration(chosen.duration, chosen.result.anchorOffsetSeconds);
+      let to = from + remainingDuration;
+      if (Number.isFinite(activeVideo.duration) && activeVideo.duration > 0) {
+        to = Math.min(to, Math.max(0, activeVideo.duration - 0.15));
+      }
+      if (!(to > from + 1)) return;
+
+      autoSkipPerformedEpisodeKey = work.episodeKey;
+      suppressLearningUntil = performance.now() + AUTO_SKIP_SUPPRESS_LEARNING_MS;
+      seekSession = null;
+      if (seekSettleTimer !== null) {
+        clearTimeout(seekSettleTimer);
+        seekSettleTimer = null;
+      }
+
+      activeVideo.currentTime = to;
+      lastAutoSkip = {
+        at: Date.now(), workKey: work.key, episodeKey: work.episodeKey,
+        fromTime: from, toTime: to, duration: remainingDuration,
+        similarity: Number(chosen.result.similarity.toFixed(4)), profileId: chosen.result.profileId,
+        matchLevel: chosen.result.matchLevel, voteScore: chosen.result.voteScore, hitCount: chosen.result.hitCount,
+        anchorOffsetSeconds: Number(chosen.result.anchorOffsetSeconds || 0)
+      };
+      showToast(t("autoSkipped", { duration: formatDuration(remainingDuration) }));
+      updateFrameSamplerState();
     } finally {
       matcherBusy = false;
     }
@@ -967,7 +1246,7 @@
   }
 
   async function maybeAutoSkipOutro(frame) {
-    if (!settings.autoSkipOutro || !frame?.fingerprint || !activeVideo || activeVideo.paused) return;
+    if (!settings.autoSkipOutro || trainingCaptureBusy || !frame?.fingerprint || !activeVideo || activeVideo.paused) return;
     if (activeVideo.seeking || matcherBusy || !isOutroWindowAt(activeVideo.currentTime, activeVideo)) return;
 
     const work = identifyWork();
@@ -980,11 +1259,17 @@
       if (!profiles.length) return;
       const now = performance.now();
       let bestProbe = null;
+      const triggered = [];
 
       for (const profile of profiles) {
         const duration = Number(profile?.duration);
         if (!Number.isFinite(duration) || duration <= 0) continue;
         const result = evaluateProfileMatch(frame.fingerprint, profile, outroMatchVotes, now);
+        lastOutroMatchByProfile.set(result.profileId, {
+          at: Date.now(), mediaTime: Number(activeVideo.currentTime.toFixed(3)),
+          similarity: Number(result.similarity.toFixed(4)), matchLevel: result.matchLevel,
+          voteScore: result.voteScore, hitCount: result.hitCount
+        });
         if (!bestProbe || result.similarity > bestProbe.similarity) {
           bestProbe = {
             at: Date.now(), workKey: work.key, episodeKey: work.episodeKey,
@@ -993,28 +1278,33 @@
             matchLevel: result.matchLevel, voteScore: result.voteScore, hitCount: result.hitCount,
             requiredScore: AUTO_MATCH_REQUIRED_SCORE, requiredHits: AUTO_MATCH_REQUIRED_HITS,
             sampleIntervalMs: frameSampleIntervalMs || FRAME_SAMPLE_MS,
-            scanWindowStart: Number(getOutroScanStart(activeVideo).toFixed(3))
+            scanWindowStart: Number(getOutroScanStart(activeVideo).toFixed(3)),
+            preciseProfile: result.preciseProfile
           };
         }
-        if (!result.shouldTrigger) continue;
-
-        const from = activeVideo.currentTime;
-        let target = from + duration;
-        const videoDuration = Number(activeVideo.duration);
-        if (Number.isFinite(videoDuration) && videoDuration > 0) {
-          target = Math.min(target, Math.max(0, videoDuration - 0.12));
-        }
-        if (!(target > from + 1)) return;
-        showOutroCountdown(work, target, result);
-        break;
+        if (result.shouldTrigger && result.preciseProfile) triggered.push({ profile, duration, result });
       }
       if (bestProbe) lastOutroMatchProbe = bestProbe;
+      if (!triggered.length) return;
+
+      const chosen = chooseBestTriggeredProfile(triggered);
+      if (!chosen) return;
+      const from = activeVideo.currentTime;
+      const remainingDuration = remainingSkipDuration(chosen.duration, chosen.result.anchorOffsetSeconds);
+      let target = from + remainingDuration;
+      const videoDuration = Number(activeVideo.duration);
+      if (Number.isFinite(videoDuration) && videoDuration > 0) {
+        target = Math.min(target, Math.max(0, videoDuration - 0.12));
+      }
+      if (!(target > from + 1)) return;
+      showOutroCountdown(work, target, chosen.result);
     } finally {
       matcherBusy = false;
     }
   }
 
   function desiredFrameSampleInterval() {
+    if (trainingCaptureBusy) return null;
     if (!activeVideo || activeVideo.paused || activeVideo.seeking || activeVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return null;
     const work = identifyWork();
     const time = Number(activeVideo.currentTime);
@@ -1052,6 +1342,7 @@
   }
 
   function sampleCurrentFrame(force = false) {
+    if (trainingCaptureBusy) return;
     if (!activeVideo || activeVideo.seeking || activeVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
     if (!force && activeVideo.paused) return;
     const work = identifyWork();
@@ -1066,33 +1357,43 @@
     const frame = captureVideoFrame(activeVideo, { withPreview: learningActive });
     if (frame) {
       lastFrame = frame;
-      addFrameToHistory(frame);
       if (introAuto) maybeAutoSkipIntro(frame).catch((error) => console.warn("[動畫瘋自動播放助手] 自動片頭辨識失敗。", error));
       if (outroAuto) maybeAutoSkipOutro(frame).catch((error) => console.warn("[動畫瘋自動播放助手] 自動片尾辨識失敗。", error));
     }
   }
 
   function beginSeekSession(video) {
+    if (trainingCaptureBusy) return;
     if ((!settings.introLearning && !settings.outroLearning) || performance.now() < suppressLearningUntil) return;
 
     if (!seekSession) {
-      const fromTime = Number.isFinite(lastStableTime) ? lastStableTime : Number(lastFrame?.mediaTime);
+      const stableTime = Number.isFinite(lastStableTime) ? Number(lastStableTime) : Number(lastFrame?.mediaTime);
+      let fromTime = stableTime;
+      const interactionFrame = pendingSeekStartFrame && performance.now() - pendingSeekStartCapturedAt <= INTERACTION_FRAME_MAX_AGE_MS
+        ? pendingSeekStartFrame
+        : null;
+      // A recent pointer/key capture is only trusted if it still agrees with the last
+      // non-seeking playback time. This prevents an unrelated old click from becoming
+      // the start anchor several seconds later.
+      if (interactionFrame?.fingerprint && Number.isFinite(stableTime) &&
+          Math.abs(Number(interactionFrame.mediaTime) - stableTime) <= PRECISE_START_FRAME_TOLERANCE_SECONDS) {
+        fromTime = Number(interactionFrame.mediaTime);
+      }
       const kind = classifyLearningKind(fromTime, video);
-      if (!kind) return;
-
-      let frame = lastFrame;
-      if (!frame || !Number.isFinite(Number(frame.mediaTime)) || Math.abs(Number(frame.mediaTime) - Number(fromTime)) > 2.5) {
-        frame = null;
+      if (!kind) {
+        pendingSeekStartFrame = null;
+        pendingSeekStartCapturedAt = 0;
+        return;
       }
 
+      const frame = takePreciseSeekStartFrame(fromTime);
       seekSession = {
         startedAt: performance.now(),
         fromTime,
         toTime: video.currentTime,
         eventCount: 1,
         kind,
-        frame: frame ? { ...frame } : null,
-        history: frameHistory.filter((item) => Math.abs(Number(item.mediaTime) - Number(fromTime)) <= 3).map((item) => ({ ...item })),
+        frame,
         work: identifyWork()
       };
     } else {
@@ -1106,6 +1407,10 @@
   function updateSeekSession(video) {
     if (!seekSession || performance.now() < suppressLearningUntil) return;
     seekSession.toTime = video.currentTime;
+    // Capture the endpoint immediately after the seek settles, before normal playback
+    // can advance several seconds during the candidate settle timer.
+    const endpointFrame = captureVideoFrame(video, { withPreview: true });
+    if (endpointFrame) seekSession.endFrame = copyFrame(endpointFrame);
 
     if (seekSettleTimer !== null) clearTimeout(seekSettleTimer);
     seekSettleTimer = setTimeout(() => {
@@ -1114,6 +1419,13 @@
         console.warn("[動畫瘋自動播放助手] 無法完成快轉學習候選。", error);
       });
     }, SEEK_SETTLE_MS);
+  }
+
+  function learningSeekDurationAllowed(kind, duration) {
+    const seconds = Number(duration);
+    if (!Number.isFinite(seconds) || seconds < settings.minLearnSkipSeconds) return false;
+    if (kind === "intro" && seconds > INTRO_MAX_LEARN_SKIP_SECONDS) return false;
+    return seconds <= 15 * 60;
   }
 
   async function finalizeSeekSession() {
@@ -1128,7 +1440,10 @@
     if (!kind) return;
     if (kind === "intro" && !settings.introLearning) return;
     if (kind === "outro" && !settings.outroLearning) return;
-    if (!Number.isFinite(duration) || duration < settings.minLearnSkipSeconds || duration > 15 * 60) return;
+    // Keep very large timeline jumps out of the opening-learning UI. A jump over
+    // three minutes is assumed to be general navigation, even when it starts
+    // inside the first ten-minute opening scan window.
+    if (!learningSeekDurationAllowed(kind, duration)) return;
 
     const work = session.work || identifyWork();
     if (activeCandidate?.work?.episodeKey === work.episodeKey) return;
@@ -1141,12 +1456,19 @@
     let bestExistingSimilarity = 0;
     if (frame?.fingerprint) {
       existingProfiles.forEach((profile, index) => {
-        const similarity = bestSimilarity(frame.fingerprint, profile);
+        const anchors = getAutoMatchAnchors(profile);
+        if (!anchors.length) return;
+        const similarity = bestAutoMatch(frame.fingerprint, profile).similarity;
         if (similarity > bestExistingSimilarity) {
           bestExistingSimilarity = similarity;
           bestExistingIndex = index;
         }
       });
+    }
+
+    let endFrame = session.endFrame?.fingerprint ? copyFrame(session.endFrame) : null;
+    if (!endFrame && activeVideo && Math.abs(Number(activeVideo.currentTime) - toTime) <= 0.5) {
+      endFrame = captureVideoFrame(activeVideo, { withPreview: true });
     }
 
     const candidate = {
@@ -1159,16 +1481,11 @@
       adjustmentSeconds: 0,
       duration,
       eventCount: session.eventCount,
-      frame: frame
-        ? {
-            mediaTime: frame.mediaTime,
-            fingerprint: frame.fingerprint,
-            previewDataUrl: frame.previewDataUrl,
-            width: frame.width,
-            height: frame.height
-          }
-        : null,
-      fingerprints: uniqueFingerprints([...(session.history || []), frame]),
+      frame: frame ? copyFrame(frame) : null,
+      startFrame: frame ? copyFrame(frame) : null,
+      endFrame: endFrame ? copyFrame(endFrame) : null,
+      // v2.2.4 new profiles never include pre-seek history frames.
+      fingerprints: frame?.fingerprint ? [frame.fingerprint] : [],
       frameCapability: { ...frameCapability },
       sourceEpisodeUrl: location.href,
       createdAt: Date.now(),
@@ -1181,6 +1498,41 @@
     showCandidateCard(candidate);
   }
 
+  function setCandidateEndFrame(candidate, frame) {
+    if (!candidate || !frame?.fingerprint) return false;
+    candidate.endFrame = copyFrame(frame);
+    if (activeCandidate === candidate && candidateCard) {
+      const img = candidateCard.querySelector("[data-end-preview]");
+      if (img) {
+        img.src = candidate.endFrame.previewDataUrl || "";
+        img.hidden = !candidate.endFrame.previewDataUrl;
+      }
+    }
+    return true;
+  }
+
+  function captureCandidateEndFrameNow(candidate) {
+    if (!candidate || !activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return false;
+    if (Math.abs(Number(activeVideo.currentTime) - Number(candidate.toTime)) > 0.5) return false;
+    const frame = captureVideoFrame(activeVideo, { withPreview: true });
+    return setCandidateEndFrame(candidate, frame);
+  }
+
+  function scheduleCandidateEndFrameCapture(candidate) {
+    if (!candidate || !activeVideo || typeof activeVideo.addEventListener !== "function") return;
+    const token = (Number(candidate.endCaptureToken) || 0) + 1;
+    candidate.endCaptureToken = token;
+    const target = Number(candidate.toTime);
+    const tryCapture = () => {
+      if (candidate.endCaptureToken !== token || activeCandidate !== candidate) return;
+      if (!activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return;
+      if (Math.abs(Number(activeVideo.currentTime) - target) > 0.5) return;
+      captureCandidateEndFrameNow(candidate);
+    };
+    activeVideo.addEventListener("seeked", () => setTimeout(tryCapture, 40), { once: true });
+    setTimeout(tryCapture, 260);
+  }
+
   function candidateAdjustedToTime(candidate, adjustmentSeconds) {
     let to = Number(candidate.originalToTime) + Number(adjustmentSeconds || 0);
     const min = Number(candidate.fromTime) + 1;
@@ -1190,9 +1542,12 @@
   }
 
   function applyCandidateAdjustment(candidate, adjustmentSeconds, { preview = true } = {}) {
-    const adjustment = clamp(Number(adjustmentSeconds) || 0, -2, 2);
-    const to = candidateAdjustedToTime(candidate, adjustment);
-    candidate.adjustmentSeconds = adjustment;
+    const requestedAdjustment = Number(adjustmentSeconds) || 0;
+    const to = candidateAdjustedToTime(candidate, requestedAdjustment);
+    // Store the effective offset after the endpoint has been clamped to the
+    // playable video range. This keeps UI/storage consistent near either edge.
+    const effectiveAdjustment = to - Number(candidate.originalToTime);
+    candidate.adjustmentSeconds = Number(effectiveAdjustment.toFixed(3));
     candidate.toTime = to;
     candidate.duration = to - Number(candidate.fromTime);
 
@@ -1203,13 +1558,43 @@
         clearTimeout(seekSettleTimer);
         seekSettleTimer = null;
       }
+      // Every adjustment click previews the exact proposed endpoint on the
+      // real Bahamut player, so the native timeline follows the cumulative value.
       activeVideo.currentTime = to;
+      scheduleCandidateEndFrameCapture(candidate);
     }
     return candidate;
   }
 
+  function adjustCandidateBy(candidate, deltaSeconds, options = {}) {
+    const current = Number(candidate.adjustmentSeconds) || 0;
+    return applyCandidateAdjustment(candidate, current + (Number(deltaSeconds) || 0), options);
+  }
+
+  function formatAdjustmentOffset(seconds) {
+    const value = Number(seconds) || 0;
+    if (Math.abs(value) < 0.0005) return "0";
+    const rounded = Number(value.toFixed(3));
+    return `${rounded > 0 ? "+" : ""}${rounded}`;
+  }
+
   async function saveCandidate(candidate, mode = "add", replaceIndex = 0) {
-    if (!candidate?.frame?.fingerprint || !candidate?.kind) return { ok: false, reason: "NO_FRAME" };
+    if (!candidate?.kind || !candidate?.work) return { ok: false, reason: "INVALID_CANDIDATE" };
+
+    // v2.2.6: do not pretend a single exact frame is a reliable opening/ending profile.
+    // While the user is saving, briefly revisit the first six seconds of the selected
+    // segment and capture several post-start visual anchors, then restore the chosen end.
+    const learnedAnchors = await collectCandidateLearningAnchors(candidate);
+    const startFrame = candidate?.startFrame?.fingerprint ? candidate.startFrame : candidate?.frame;
+    const informativeAnchors = learnedAnchors.filter((anchor) => isInformativeFingerprint(anchor?.fingerprint));
+    if (!startFrame?.fingerprint) return { ok: false, reason: "NO_FRAME" };
+    if (informativeAnchors.length < PROFILE_MIN_RELIABLE_ANCHORS) {
+      return { ok: false, reason: "INSUFFICIENT_ANCHORS", anchorCount: informativeAnchors.length };
+    }
+
+    // The player has been restored to the proposed endpoint by collectCandidateLearningAnchors.
+    // Refresh the end preview once more so storage and the visible timeline agree.
+    captureCandidateEndFrameNow(candidate);
 
     const all = await getProfiles(candidate.kind);
     const existing = all[candidate.work.key] || {
@@ -1219,24 +1604,34 @@
       profiles: []
     };
 
-    const fingerprints = Array.isArray(candidate.fingerprints) && candidate.fingerprints.length
-      ? candidate.fingerprints.slice(-FRAME_HISTORY_MAX)
-      : [candidate.frame.fingerprint];
-
+    const startFingerprint = startFrame.fingerprint;
+    const endFrame = candidate.endFrame?.fingerprint ? candidate.endFrame : null;
     const profile = {
       id: `${candidate.kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       kind: candidate.kind,
+      profileSchemaVersion: PROFILE_SCHEMA_VERSION,
+      anchorVersion: PROFILE_ANCHOR_VERSION,
       createdAt: Date.now(),
       duration: Number(candidate.duration.toFixed(3)),
       startTimeHint: Number(candidate.fromTime.toFixed(3)),
       endTimeHint: Number(candidate.toTime.toFixed(3)),
       adjustmentSeconds: Number(candidate.adjustmentSeconds || 0),
-      fingerprint: candidate.frame.fingerprint,
-      fingerprints,
-      fingerprintVersion: 1,
-      previewDataUrl: candidate.frame.previewDataUrl,
-      previewWidth: candidate.frame.width,
-      previewHeight: candidate.frame.height,
+      startFingerprint,
+      endFingerprint: endFrame?.fingerprint || null,
+      anchors: informativeAnchors,
+      // Compatibility aliases. Automatic matching uses the timestamped anchor list above.
+      fingerprint: startFingerprint,
+      fingerprints: informativeAnchors.map((anchor) => anchor.fingerprint),
+      fingerprintVersion: 3,
+      previewDataUrl: startFrame.previewDataUrl || null,
+      previewWidth: startFrame.width,
+      previewHeight: startFrame.height,
+      startPreviewDataUrl: startFrame.previewDataUrl || null,
+      startPreviewWidth: startFrame.width,
+      startPreviewHeight: startFrame.height,
+      endPreviewDataUrl: endFrame?.previewDataUrl || null,
+      endPreviewWidth: endFrame?.width || startFrame.width,
+      endPreviewHeight: endFrame?.height || startFrame.height,
       sourceEpisodeUrl: candidate.sourceEpisodeUrl
     };
 
@@ -1262,9 +1657,14 @@
     all[candidate.work.key] = existing;
     await extensionApi.storage.local.set({ [profileStorageKey(candidate.kind)]: all });
     setProfileCache(candidate.kind, { workKey: candidate.work.key, entry: existing, loadedAt: Date.now() });
-    if (candidate.kind === "outro") outroMatchVotes = new Map();
-    else matchVotes = new Map();
-    return { ok: true, profile, mode: savedMode, index: savedIndex };
+    if (candidate.kind === "outro") {
+      outroMatchVotes = new Map();
+      lastOutroMatchByProfile = new Map();
+    } else {
+      matchVotes = new Map();
+      lastMatchByProfile = new Map();
+    }
+    return { ok: true, profile, mode: savedMode, index: savedIndex, anchorCount: informativeAnchors.length };
   }
 
   function removeCandidateCard() {
@@ -1288,6 +1688,19 @@
     return document.body || document.documentElement;
   }
 
+  async function skipCurrentCandidateEpisode() {
+    // 「略過本集」明確抑制本集同類型（片頭或片尾）的後續學習詢問。
+    // 片頭與片尾分開記錄，因此略過片頭不會阻止本集片尾學習。
+    if (!activeCandidate) return;
+    const candidate = activeCandidate;
+    if (candidateExpireTimer !== null) {
+      clearTimeout(candidateExpireTimer);
+      candidateExpireTimer = null;
+    }
+    await recordCandidateHandled(candidate, "skip-episode", { suppressKindForEpisode: true });
+    fadeCandidateCard(false);
+  }
+
   function showCandidateCard(candidate) {
     removeCandidateCard();
     activeCandidate = candidate;
@@ -1298,7 +1711,8 @@
     card.setAttribute("role", "dialog");
     card.setAttribute("aria-label", t(isOutro ? "candidateAriaOutro" : "candidateAria"));
 
-    const frameAvailable = Boolean(candidate.frame?.previewDataUrl && candidate.frame?.fingerprint);
+    const hasPreciseFrame = Boolean(candidate.frame?.previewDataUrl && candidate.frame?.fingerprint);
+    const frameAvailable = hasPreciseFrame;
     const existingCount = Number(candidate.existingProfilesCount) || 0;
     const similarIndex = Number.isInteger(candidate.bestExistingIndex) && candidate.bestExistingIndex >= 0
       ? candidate.bestExistingIndex
@@ -1311,12 +1725,15 @@
       <div class="bahamut-helper-adjust-panel">
         <div class="bahamut-helper-adjust-head">
           <span>${escapeHtml(t("endAdjustLabel"))}</span>
-          <strong data-preview-end>${escapeHtml(t("previewEnd", { time: formatTime(candidate.toTime) }))}</strong>
+          <div class="bahamut-helper-adjust-readout">
+            <strong data-preview-end>${escapeHtml(t("previewEnd", { time: formatTime(candidate.toTime) }))}</strong>
+            <em data-adjust-total>${escapeHtml(t("adjustmentTotal", { offset: formatAdjustmentOffset(candidate.adjustmentSeconds) }))}</em>
+          </div>
         </div>
         <div class="bahamut-helper-adjust-buttons" role="group" aria-label="${escapeHtml(t("endAdjustLabel"))}">
-          <button type="button" data-adjust="-2">${escapeHtml(t("adjustMinus2"))}</button>
-          <button type="button" data-adjust="0" class="is-active">${escapeHtml(t("originalEnd"))}</button>
-          <button type="button" data-adjust="2">${escapeHtml(t("adjustPlus2"))}</button>
+          <button type="button" data-adjust-delta="-2">${escapeHtml(t("adjustMinus2"))}</button>
+          <button type="button" data-adjust-reset="true" class="is-active">${escapeHtml(t("originalEnd"))}</button>
+          <button type="button" data-adjust-delta="2">${escapeHtml(t("adjustPlus2"))}</button>
         </div>
         <div class="bahamut-helper-adjust-help">${escapeHtml(t("endAdjustHelp"))}</div>
       </div>`;
@@ -1337,7 +1754,7 @@
           <div class="bahamut-helper-compact-title">${escapeHtml(compactTitle)}</div>
           <div class="bahamut-helper-compact-actions">
             <button class="bahamut-helper-primary" data-action="${primaryAction}" data-replace-index="${primaryIndex}" type="button" ${frameAvailable ? "" : "disabled"}>${escapeHtml(primaryLabel)}</button>
-            <button class="bahamut-helper-secondary" data-action="skip" type="button">${escapeHtml(t("skipOnce"))}</button>
+            <button class="bahamut-helper-secondary" data-action="skip" type="button">${escapeHtml(t("skipEpisode"))}</button>
             <button class="bahamut-helper-ghost" data-action="later" type="button">${escapeHtml(t("askLater"))}</button>
           </div>
         </div>
@@ -1349,11 +1766,15 @@
         <div class="bahamut-helper-progress"><span></span></div>
       `;
     } else {
-      const preview = frameAvailable
+      const startPreview = frameAvailable
         ? `<img class="bahamut-helper-preview" src="${candidate.frame.previewDataUrl}" alt="${escapeHtml(t("previewAlt"))}">`
         : `<div class="bahamut-helper-preview bahamut-helper-preview--empty">${escapeHtml(t("previewUnavailable"))}</div>`;
+      const endPreview = candidate.endFrame?.previewDataUrl
+        ? `<img class="bahamut-helper-preview" data-end-preview src="${candidate.endFrame.previewDataUrl}" alt="${escapeHtml(t("endPreviewAlt"))}">`
+        : `<img class="bahamut-helper-preview" data-end-preview src="" alt="${escapeHtml(t("endPreviewAlt"))}" hidden>`;
+      const preview = `<div class="bahamut-helper-preview-pair">${startPreview}<span>→</span>${endPreview}</div>`;
       const capabilityNote = frameAvailable
-        ? t("capabilityOk")
+        ? (isInformativeFingerprint(candidate.frame.fingerprint) ? t("capabilityOk") : t("capabilityUninformative"))
         : candidate.frameCapability.status === "blocked" ? t("capabilityBlocked") : t("capabilityMissing");
 
       card.innerHTML = `
@@ -1375,10 +1796,10 @@
           </div>
         </div>
         ${adjustControls}
-        <div class="bahamut-helper-capability ${frameAvailable ? "is-ok" : "is-warning"}">${escapeHtml(capabilityNote)}</div>
+        <div class="bahamut-helper-capability ${frameAvailable && isInformativeFingerprint(candidate.frame.fingerprint) ? "is-ok" : "is-warning"}">${escapeHtml(capabilityNote)}</div>
         <div class="bahamut-helper-actions has-three">
           <button class="bahamut-helper-primary" data-action="add" type="button" ${frameAvailable ? "" : "disabled"}>${escapeHtml(t(isOutro ? "saveOutro" : "saveIntro"))}</button>
-          <button class="bahamut-helper-secondary" data-action="skip" type="button">${escapeHtml(t("skipOnce"))}</button>
+          <button class="bahamut-helper-secondary" data-action="skip" type="button">${escapeHtml(t("skipEpisode"))}</button>
           <button class="bahamut-helper-ghost" data-action="later" type="button">${escapeHtml(t("askLater"))}</button>
         </div>
         <div class="bahamut-helper-progress"><span></span></div>
@@ -1401,40 +1822,42 @@
       const fromTo = card.querySelector("[data-from-to]");
       const durationNode = card.querySelector("[data-skip-duration]");
       const endNode = card.querySelector("[data-preview-end]");
+      const totalNode = card.querySelector("[data-adjust-total]");
       if (fromTo) fromTo.textContent = `${formatTime(candidate.fromTime)} → ${formatTime(candidate.toTime)}`;
       if (durationNode) durationNode.textContent = t("skipLabel", { duration: formatDuration(candidate.duration) });
       if (endNode) endNode.textContent = t("previewEnd", { time: formatTime(candidate.toTime) });
-      for (const button of card.querySelectorAll("[data-adjust]")) {
-        button.classList.toggle("is-active", Number(button.dataset.adjust) === Number(candidate.adjustmentSeconds || 0));
-      }
+      if (totalNode) totalNode.textContent = t("adjustmentTotal", { offset: formatAdjustmentOffset(candidate.adjustmentSeconds) });
+      const resetButton = card.querySelector("[data-adjust-reset]");
+      if (resetButton) resetButton.classList.toggle("is-active", Math.abs(Number(candidate.adjustmentSeconds) || 0) < 0.0005);
     };
 
-    for (const button of card.querySelectorAll("[data-adjust]")) {
+    for (const button of card.querySelectorAll("[data-adjust-delta]")) {
       button.addEventListener("click", () => {
-        applyCandidateAdjustment(candidate, Number(button.dataset.adjust), { preview: true });
+        adjustCandidateBy(candidate, Number(button.dataset.adjustDelta), { preview: true });
         updateAdjustmentUi();
         restartExpiry();
       });
     }
 
-    const dismissCandidate = async () => {
+    card.querySelector("[data-adjust-reset]")?.addEventListener("click", () => {
+      applyCandidateAdjustment(candidate, 0, { preview: true });
+      updateAdjustmentUi();
+      restartExpiry();
+    });
+
+    const closeCandidateForLater = () => {
       if (candidateExpireTimer !== null) {
         clearTimeout(candidateExpireTimer);
         candidateExpireTimer = null;
       }
-      await recordCandidateHandled(candidate, "dismissed");
       fadeCandidateCard(false);
     };
 
-    card.querySelector(".bahamut-helper-close")?.addEventListener("click", () => dismissCandidate().catch(() => removeCandidateCard()));
-    card.querySelector('[data-action="skip"]')?.addEventListener("click", () => dismissCandidate().catch(() => removeCandidateCard()));
-    card.querySelector('[data-action="later"]')?.addEventListener("click", () => {
-      if (candidateExpireTimer !== null) {
-        clearTimeout(candidateExpireTimer);
-        candidateExpireTimer = null;
-      }
-      fadeCandidateCard(false);
+    card.querySelector(".bahamut-helper-close")?.addEventListener("click", closeCandidateForLater);
+    card.querySelector('[data-action="skip"]')?.addEventListener("click", () => {
+      skipCurrentCandidateEpisode().catch(() => removeCandidateCard());
     });
+    card.querySelector('[data-action="later"]')?.addEventListener("click", closeCandidateForLater);
 
     async function runSave(button, mode, replaceIndex = 0) {
       if (!frameAvailable || !button || button.disabled) return;
@@ -1443,7 +1866,7 @@
         candidateExpireTimer = null;
       }
 
-      const actionButtons = [...card.querySelectorAll("[data-action], [data-adjust]")];
+      const actionButtons = [...card.querySelectorAll("[data-action], [data-adjust-delta], [data-adjust-reset]")];
       actionButtons.forEach((node) => { node.disabled = true; });
       const originalText = button.textContent;
       button.textContent = t("saving");
@@ -1539,7 +1962,6 @@
 
   function handleLoadedData() {
     lastStableTime = activeVideo?.currentTime ?? null;
-    frameHistory = [];
     lastFrame = null;
     setFrameCapability("waiting", t("loadedFrame"));
     updateFrameSamplerState({ sampleNow: true });
@@ -1555,6 +1977,9 @@
 
   function unbindVideo() {
     if (!activeVideo) return;
+    trainingCaptureGeneration += 1;
+    trainingCaptureBusy = false;
+    suppressLearningUntil = 0;
     activeVideo.removeEventListener("timeupdate", handleTimeUpdate);
     activeVideo.removeEventListener("seeking", handleSeeking);
     activeVideo.removeEventListener("seeked", handleSeeked);
@@ -1566,7 +1991,8 @@
     activeVideo = null;
     lastStableTime = null;
     lastFrame = null;
-    frameHistory = [];
+    pendingSeekStartFrame = null;
+    pendingSeekStartCapturedAt = 0;
     seekSession = null;
     if (seekSettleTimer !== null) {
       clearTimeout(seekSettleTimer);
@@ -1633,7 +2059,8 @@
         removeOutroCountdown();
         seekSession = null;
         lastFrame = null;
-        frameHistory = [];
+            pendingSeekStartFrame = null;
+        pendingSeekStartCapturedAt = 0;
         resetMatcherForNavigation();
         updateFrameSamplerState({ sampleNow: true });
       }
@@ -1695,13 +2122,71 @@
       if (changes.introProfiles) {
         introProfilesCache = { workKey: null, entry: null, loadedAt: 0 };
         matchVotes = new Map();
+        lastMatchByProfile = new Map();
       }
       if (changes.outroProfiles) {
         outroProfilesCache = { workKey: null, entry: null, loadedAt: 0 };
         outroMatchVotes = new Map();
+        lastOutroMatchByProfile = new Map();
       }
       if (changes[PROMPT_HISTORY_KEY]) promptHistoryCache = null;
     });
+  }
+
+  function summarizeProfile(profile, index, kind, lastProbeMap) {
+    const stats = profileAnchorStats(profile);
+    const profileId = typeof profile?.id === "string" ? profile.id : `${profile?.createdAt || 0}:${profile?.startTimeHint || 0}`;
+    const probe = lastProbeMap instanceof Map ? lastProbeMap.get(profileId) : null;
+    return {
+      id: typeof profile?.id === "string" ? profile.id : null,
+      index,
+      kind,
+      precise: stats.count > 0,
+      reliable: stats.reliable,
+      legacy: !stats.reliable,
+      anchorCount: stats.count,
+      anchorVersion: stats.version,
+      createdAt: Number(profile?.createdAt) || 0,
+      startTimeHint: Number(profile?.startTimeHint) || 0,
+      endTimeHint: Number(profile?.endTimeHint),
+      duration: Number(profile?.duration) || 0,
+      adjustmentSeconds: Number(profile?.adjustmentSeconds) || 0,
+      startPreviewDataUrl: profile?.startPreviewDataUrl || profile?.previewDataUrl || null,
+      endPreviewDataUrl: profile?.endPreviewDataUrl || null,
+      sourceEpisodeUrl: typeof profile?.sourceEpisodeUrl === "string" ? profile.sourceEpisodeUrl : "",
+      latestSimilarity: probe ? Number(probe.similarity) : null
+    };
+  }
+
+  async function deleteCurrentWorkProfile(kind, profileId, profileIndex) {
+    if (kind !== "intro" && kind !== "outro") return { deleted: false, reason: "INVALID_KIND" };
+    const work = identifyWork();
+    const all = await getProfiles(kind);
+    const entry = all[work.key];
+    const profiles = Array.isArray(entry?.profiles) ? [...entry.profiles] : [];
+    let index = -1;
+    if (typeof profileId === "string" && profileId) index = profiles.findIndex((profile) => profile?.id === profileId);
+    if (index < 0 && Number.isInteger(Number(profileIndex))) {
+      const candidateIndex = Number(profileIndex);
+      if (candidateIndex >= 0 && candidateIndex < profiles.length) index = candidateIndex;
+    }
+    if (index < 0) return { deleted: false, reason: "NOT_FOUND", work };
+    profiles.splice(index, 1);
+    if (profiles.length) {
+      all[work.key] = { ...entry, profiles, updatedAt: Date.now() };
+    } else {
+      delete all[work.key];
+    }
+    await extensionApi.storage.local.set({ [profileStorageKey(kind)]: all });
+    setProfileCache(kind, { workKey: null, entry: null, loadedAt: 0 });
+    if (kind === "intro") {
+      matchVotes = new Map();
+      lastMatchByProfile = new Map();
+    } else {
+      outroMatchVotes = new Map();
+      lastOutroMatchByProfile = new Map();
+    }
+    return { deleted: true, kind, index, work };
   }
 
   async function getLearningStatus() {
@@ -1733,6 +2218,8 @@
       profileCount: Array.isArray(introEntry?.profiles) ? introEntry.profiles.length : 0,
       introProfileCount: Array.isArray(introEntry?.profiles) ? introEntry.profiles.length : 0,
       outroProfileCount: Array.isArray(outroEntry?.profiles) ? outroEntry.profiles.length : 0,
+      introProfiles: (Array.isArray(introEntry?.profiles) ? introEntry.profiles : []).map((profile, index) => summarizeProfile(profile, index, "intro", lastMatchByProfile)),
+      outroProfiles: (Array.isArray(outroEntry?.profiles) ? outroEntry.profiles : []).map((profile, index) => summarizeProfile(profile, index, "outro", lastOutroMatchByProfile)),
       introWindowActive,
       outroWindowActive,
       frameSamplerIntervalMs: frameSampleIntervalMs,
@@ -1811,6 +2298,8 @@
         });
       } else if (message.type === "clear-current-work-profiles") {
         responseTask = clearCurrentWorkProfiles();
+      } else if (message.type === "delete-current-work-profile") {
+        responseTask = deleteCurrentWorkProfile(message.kind, message.profileId, message.profileIndex);
       } else {
         return false;
       }
@@ -1829,6 +2318,8 @@
     await loadSettings();
     bindSettingsChanges();
     bindRuntimeMessages();
+    document.addEventListener("pointerdown", handlePotentialSeekPointerDown, true);
+    document.addEventListener("keydown", handlePotentialSeekKeyDown, true);
     startObserver();
     startFallbackScanner();
     startVideoScanner();

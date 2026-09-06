@@ -9,10 +9,10 @@
 
 .bahamut-helper-candidate {
   bottom: 20px;
-  width: min(330px, calc(100vw - 28px));
-  padding: 14px;
+  width: min(300px, calc(100vw - 24px));
+  padding: 10px;
   border: 1px solid rgba(125, 158, 224, 0.28);
-  border-radius: 15px;
+  border-radius: 12px;
   background: linear-gradient(180deg, rgba(14, 28, 56, 0.97), rgba(8, 20, 42, 0.97));
   box-shadow: 0 20px 52px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.025);
   font-size: 12px;
@@ -31,8 +31,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 9px;
+  margin-bottom: 7px;
 }
 
 .bahamut-helper-eyebrow {
@@ -43,36 +43,36 @@
   letter-spacing: .03em;
 }
 
-.bahamut-helper-title { font-size: 14px; font-weight: 750; line-height: 1.35; }
+.bahamut-helper-title { font-size: 12.5px; font-weight: 750; line-height: 1.3; }
 
 .bahamut-helper-close {
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: #8491aa;
-  font-size: 20px;
-  line-height: 24px;
+  font-size: 18px;
+  line-height: 21px;
   cursor: pointer;
 }
 .bahamut-helper-close:hover { background: rgba(255,255,255,.05); color: #dce5fa; }
 
 .bahamut-helper-candidate-body {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 11px;
+  grid-template-columns: 154px minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
 }
 
 .bahamut-helper-preview {
   display: block;
-  width: 112px;
-  height: 64px;
+  width: 70px;
+  height: 40px;
   object-fit: cover;
   border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 9px;
+  border-radius: 7px;
   background: #060b16;
 }
 
@@ -85,12 +85,24 @@
   text-align: center;
 }
 
+.bahamut-helper-preview-pair {
+  display: grid;
+  grid-template-columns: 70px 10px 70px;
+  align-items: center;
+  gap: 2px;
+  color: #71809a;
+  font-size: 9px;
+  text-align: center;
+}
+.bahamut-helper-preview-pair > span { opacity: .75; }
+.bahamut-helper-preview[hidden] { visibility: hidden; display: block; }
+
 .bahamut-helper-candidate-copy { min-width: 0; }
 .bahamut-helper-work {
   overflow: hidden;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   color: #f1f5ff;
-  font-size: 12px;
+  font-size: 9.3px;
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -101,18 +113,18 @@
   gap: 3px;
   color: #9aa6bb;
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: 9.7px;
 }
 .bahamut-helper-time-row strong { color: #b8caff; font-weight: 700; }
 
 .bahamut-helper-capability {
-  margin-top: 10px;
-  padding: 7px 8px;
+  margin-top: 7px;
+  padding: 5px 6px;
   border-radius: 8px;
   background: rgba(255,255,255,.035);
   color: #8996ac;
-  font-size: 9.5px;
-  line-height: 1.4;
+  font-size: 8.6px;
+  line-height: 1.32;
 }
 .bahamut-helper-capability.is-ok { color: #79cba2; background: rgba(58, 171, 112, .07); }
 .bahamut-helper-capability.is-warning { color: #d7b478; background: rgba(204, 145, 51, .07); }
@@ -120,16 +132,16 @@
 .bahamut-helper-actions {
   display: grid;
   grid-template-columns: minmax(0,1fr) minmax(0,.8fr);
-  gap: 7px;
-  margin-top: 10px;
+  gap: 5px;
+  margin-top: 7px;
 }
 .bahamut-helper-actions.has-three { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
 .bahamut-helper-actions.has-three .bahamut-helper-ghost { grid-column: 1 / -1; min-height: 28px; }
 
 .bahamut-helper-actions button {
-  min-height: 34px;
-  padding: 7px 9px;
-  border-radius: 9px;
+  min-height: 29px;
+  padding: 5px 7px;
+  border-radius: 7px;
   font: inherit;
   font-size: 10.5px;
   font-weight: 750;
@@ -229,15 +241,15 @@
 
 /* v1.4：已有片頭時的候選詢問改成極簡單行小卡。 */
 .bahamut-helper-candidate.is-compact-existing {
-  width: min(430px, calc(100vw - 28px));
-  padding: 10px 11px 11px;
-  border-radius: 12px;
+  width: min(330px, calc(100vw - 24px));
+  padding: 8px 9px 9px;
+  border-radius: 8px;
 }
 
 .bahamut-helper-compact-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
 }
 
 .bahamut-helper-compact-title {
@@ -245,7 +257,7 @@
   flex: 1 1 auto;
   overflow: hidden;
   color: #edf3ff;
-  font-size: 11.5px;
+  font-size: 10.2px;
   font-weight: 700;
   line-height: 1.35;
   text-overflow: ellipsis;
@@ -256,15 +268,15 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .bahamut-helper-compact-actions button {
-  min-height: 28px;
-  padding: 5px 8px;
+  min-height: 25px;
+  padding: 4px 6px;
   border-radius: 8px;
   font: inherit;
-  font-size: 9.5px;
+  font-size: 8.6px;
   font-weight: 750;
   cursor: pointer;
 }
@@ -286,11 +298,11 @@
   }
 }
 
-/* v2.2.0 — learning endpoint adjustment. Clicking ±2 s also seeks the real
+/* v2.2.3 — cumulative learning endpoint adjustment. Repeated ±2 s clicks seek the real
    Bahamut player so its native timeline shows the exact proposed endpoint. */
 .bahamut-helper-adjust-panel {
-  margin-top: 10px;
-  padding: 8px;
+  margin-top: 7px;
+  padding: 6px;
   border: 1px solid rgba(113, 146, 211, .18);
   border-radius: 10px;
   background: rgba(5, 14, 31, .42);
@@ -299,24 +311,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 7px;
   color: #96a5bf;
-  font-size: 9.5px;
+  font-size: 8.7px;
 }
 .bahamut-helper-adjust-head strong {
   color: #c8d6f4;
   font-variant-numeric: tabular-nums;
   font-weight: 750;
 }
+
+.bahamut-helper-adjust-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+.bahamut-helper-adjust-readout em {
+  color: #6f8fe7;
+  font-size: 8.7px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
 .bahamut-helper-adjust-buttons {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 5px;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 .bahamut-helper-adjust-buttons button {
-  min-height: 28px;
-  padding: 5px 7px;
+  min-height: 25px;
+  padding: 4px 6px;
   border: 1px solid rgba(119, 151, 216, .22);
   border-radius: 8px;
   background: rgba(18, 35, 65, .72);
@@ -334,9 +361,9 @@
 }
 .bahamut-helper-adjust-buttons button:disabled { opacity: .45; cursor: default; }
 .bahamut-helper-adjust-help {
-  margin-top: 6px;
+  margin-top: 4px;
   color: #74839e;
-  font-size: 8.7px;
+  font-size: 8px;
   line-height: 1.35;
 }
 .bahamut-helper-time-row--compact {
@@ -416,3 +443,7 @@
 }
 
 :fullscreen ~ .bahamut-helper-outro-countdown { display: none !important; }
+
+/* v2.2.4: existing-profile prompts stay compact; the player movement itself is the preview. */
+.bahamut-helper-candidate.is-compact-existing .bahamut-helper-adjust-help { display: none; }
+.bahamut-helper-candidate.is-compact-existing .bahamut-helper-adjust-panel { margin-top: 5px; }
