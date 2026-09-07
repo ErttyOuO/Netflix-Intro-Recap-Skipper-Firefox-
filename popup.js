@@ -1,4 +1,4 @@
-// Unified Netflix + Bahamut popup controller - v2.2.6
+// Unified Netflix + Bahamut popup controller - v2.2.11
 
 const extensionApi = globalThis.browser || globalThis.chrome;
 if (!extensionApi) throw new Error("WebExtension API unavailable");
@@ -34,7 +34,7 @@ const BAHAMUT_TEXT = Object.freeze({
       outroLearningTitle: "片尾快轉學習",
       outroLearningDesc: "影片最後 6 分鐘的人工快轉可記錄為片尾",
       autoSkipOutroTitle: "自動跳過已學習片尾",
-      autoSkipOutroDesc: "最後 6 分鐘辨識片尾；可取消倒數並繼續觀看",
+      autoSkipOutroDesc: "最後 6 分鐘辨識片尾；倒數時移動滑鼠即可取消並繼續觀看",
       diagTitle: "目前作品",
       work: "作品",
       workId: "作品 ID",
@@ -51,7 +51,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "測試純影片影格",
       scan: "重新掃描頁面",
       clear: "刪除目前作品的片頭／片尾學習資料",
-      noticePrimary: "v2.2.6：儲存片頭／片尾時會建立多影格錨點，避免只靠第一幀造成下一集無法辨識；單影格舊資料建議重新學習。",
+      noticePrimary: "v2.2.11：跳過片尾後若仍有內容，播放器右下角會保留「下一集」按鈕，可隨時直接前往下一集。",
       noticePrivacy: "影片影格與學習資料只儲存在本機，不會上傳到外部服務。",
       notRead: "尚未讀取",
       notDetected: "未辨識",
@@ -89,7 +89,8 @@ const BAHAMUT_TEXT = Object.freeze({
       nothingToClear: "目前作品沒有已儲存的片頭／片尾資料。",
       clearFail: "刪除失敗。請確認目前分頁是動畫瘋播放頁。",
       exportLearning: "匯出片頭／片尾學習資料",
-      importLearning: "匯入片頭／片尾學習資料",
+      importLearning: "匯入／還原片頭／片尾資料",
+      manageLearning: "管理全部作品與預覽圖",
       exportEmpty: "目前沒有可匯出的片頭／片尾學習資料。",
       exportDone: "已匯出 {works} 部作品、{intro} 組片頭、{outro} 組片尾。",
       exportFail: "片頭／片尾學習資料匯出失敗。",
@@ -97,7 +98,7 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "匯入完成：{works} 部作品、{intro} 組片頭、{outro} 組片尾；重複資料已自動略過。",
       importInvalid: "這不是有效的動畫瘋片頭／片尾學習資料檔。",
       importFail: "片頭／片尾學習資料匯入失敗。",
-      learningBackupNote: "可將作品名稱、作品 ID、片頭／片尾精確入點、起訖預覽圖與跳過時間完整備份／還原。",
+      learningBackupNote: "匯出可直接下載；匯入／還原會開啟固定管理頁，選檔後先驗證並預覽全部作品，再決定合併或完整還原。",
       profileManagerTitle: "已儲存片段",
       introGroup: "片頭",
       outroGroup: "片尾",
@@ -131,7 +132,7 @@ const BAHAMUT_TEXT = Object.freeze({
       outroLearningTitle: "片尾快转学习",
       outroLearningDesc: "影片最后 6 分钟的人工快转可记录为片尾",
       autoSkipOutroTitle: "自动跳过已学习片尾",
-      autoSkipOutroDesc: "最后 6 分钟辨识片尾；可取消倒数并继续观看",
+      autoSkipOutroDesc: "最后 6 分钟辨识片尾；倒数时移动鼠标即可取消并继续观看",
       diagTitle: "目前作品",
       work: "作品",
       workId: "作品 ID",
@@ -148,7 +149,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "测试纯影片影格",
       scan: "重新扫描页面",
       clear: "删除目前作品的片头／片尾学习资料",
-      noticePrimary: "v2.2.6：储存片头／片尾时会建立多影格锚点，避免只靠第一帧造成下一集无法辨识；单影格旧资料建议重新学习。",
+      noticePrimary: "v2.2.11：跳过片尾后如果仍有内容，播放器右下角会保留“下一集”按钮，可随时直接前往下一集。",
       noticePrivacy: "影片影格与学习资料只储存在本机，不会上传到外部服务。",
       notRead: "尚未读取",
       notDetected: "未辨识",
@@ -186,7 +187,8 @@ const BAHAMUT_TEXT = Object.freeze({
       nothingToClear: "目前作品没有已储存的片头／片尾资料。",
       clearFail: "删除失败。请确认目前分页是动画疯播放页。",
       exportLearning: "导出片头／片尾学习资料",
-      importLearning: "导入片头／片尾学习资料",
+      importLearning: "导入／还原片头／片尾资料",
+      manageLearning: "管理全部作品与预览图",
       exportEmpty: "目前没有可导出的片头／片尾学习资料。",
       exportDone: "已导出 {works} 部作品、{intro} 组片头、{outro} 组片尾。",
       exportFail: "片头／片尾学习资料导出失败。",
@@ -194,7 +196,7 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "导入完成：{works} 部作品、{intro} 组片头、{outro} 组片尾；重复资料已自动略过。",
       importInvalid: "这不是有效的动画疯片头／片尾学习资料档。",
       importFail: "片头／片尾学习资料导入失败。",
-      learningBackupNote: "可将作品名称、作品 ID、片头／片尾精确入点、起讫预览图与跳过时间完整备份／还原。",
+      learningBackupNote: "导出可直接下载；导入／还原会打开固定管理页，选档后先验证并预览全部作品，再决定合并或完整还原。",
       profileManagerTitle: "已储存片段",
       introGroup: "片头",
       outroGroup: "片尾",
@@ -228,7 +230,7 @@ const BAHAMUT_TEXT = Object.freeze({
       outroLearningTitle: "Learn ending skips",
       outroLearningDesc: "Manual forward seeks in the final 6 minutes can be saved as endings",
       autoSkipOutroTitle: "Auto-skip learned endings",
-      autoSkipOutroDesc: "Match endings in the final 6 minutes with a cancelable countdown",
+      autoSkipOutroDesc: "Match endings in the final 6 minutes; move the mouse over the player to cancel the countdown",
       diagTitle: "Current title",
       work: "Title",
       workId: "Work ID",
@@ -245,7 +247,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "Test pure video frame",
       scan: "Rescan page",
       clear: "Delete opening/ending data for this title",
-      noticePrimary: "v2.2.6 learns multiple visual anchors for each opening/ending instead of trusting a single first frame; single-frame legacy profiles should be relearned.",
+      noticePrimary: "v2.2.11 keeps a Next episode button in the player after an ending is skipped when post-ending content remains.",
       noticePrivacy: "Video frames and learning data stay on this device and are never uploaded to an external service.",
       notRead: "Not loaded",
       notDetected: "Not detected",
@@ -283,7 +285,8 @@ const BAHAMUT_TEXT = Object.freeze({
       nothingToClear: "This title has no saved opening/ending data.",
       clearFail: "Delete failed. Make sure the active tab is a Bahamut Anime playback page.",
       exportLearning: "Export opening/ending learning data",
-      importLearning: "Import opening/ending learning data",
+      importLearning: "Import / restore opening/ending data",
+      manageLearning: "Manage all titles and preview images",
       exportEmpty: "There is no opening/ending learning data to export.",
       exportDone: "Exported {works} titles, {intro} openings, and {outro} endings.",
       exportFail: "Opening/ending learning data export failed.",
@@ -291,7 +294,7 @@ const BAHAMUT_TEXT = Object.freeze({
       importDone: "Import complete: {works} titles, {intro} openings, and {outro} endings; duplicates were skipped.",
       importInvalid: "This is not a valid Bahamut opening/ending learning backup file.",
       importFail: "Opening/ending learning data import failed.",
-      learningBackupNote: "Back up and restore precise opening/ending anchors, start/end preview images, and skip durations.",
+      learningBackupNote: "Export stays available here. Import/restore opens a persistent manager page so file selection cannot be interrupted by the toolbar popup closing.",
       profileManagerTitle: "Saved segments",
       introGroup: "Openings",
       outroGroup: "Endings",
@@ -358,7 +361,7 @@ function formatBahamutText(key, values = {}) {
 const INTRO_BACKUP_FORMAT = "netflix-bahamut-auto-player/bahamut-intro-learning";
 const LEARNING_BACKUP_FORMAT = "netflix-bahamut-auto-player/bahamut-skip-learning";
 const INTRO_BACKUP_VERSION = 1;
-const LEARNING_BACKUP_VERSION = 3;
+const LEARNING_BACKUP_VERSION = 4;
 const INTRO_MAX_PROFILES_PER_WORK = 3;
 
 
@@ -513,6 +516,7 @@ function applyBahamutLanguage(lang) {
     clearLearning: "clear",
     exportLearning: "exportLearning",
     importLearning: "importLearning",
+    manageLearning: "manageLearning",
     learningBackupNote: "learningBackupNote",
     profileManagerTitle: "profileManagerTitle",
     introGroupTitle: "introGroup",
@@ -582,8 +586,8 @@ function bindBahamutSettings() {
   $("testFrame").addEventListener("click", testBahamutFrame);
   $("clearLearning").addEventListener("click", clearBahamutLearning);
   $("exportLearning").addEventListener("click", exportBahamutLearning);
-  $("importLearning").addEventListener("click", () => $("importLearningFile").click());
-  $("importLearningFile").addEventListener("change", handleBahamutLearningImport);
+  $("importLearning").addEventListener("click", () => openBahamutBackupManager("import"));
+  $("manageLearning")?.addEventListener("click", () => openBahamutBackupManager("manage"));
   $("profileManager")?.addEventListener("click", (event) => {
     const button = event.target?.closest?.(".profile-delete");
     if (button) deleteBahamutProfile(button);
@@ -669,9 +673,11 @@ function renderProfileGroup(containerId, profiles, kind) {
     meta.className = "profile-meta";
     const end = Number(profile?.endTimeHint);
     const duration = Number(profile?.duration);
-    const adjustment = Number(profile?.adjustmentSeconds) || 0;
+    const startAdjustment = Number(profile?.startAdjustmentSeconds) || 0;
+    const endAdjustment = Number(profile?.endAdjustmentSeconds ?? profile?.adjustmentSeconds) || 0;
+    const fmtAdjustment = (value) => `${value > 0 ? "+" : ""}${Number(value.toFixed(3))}s`;
     const similarity = profile?.latestSimilarity == null ? null : Number(profile.latestSimilarity);
-    meta.textContent = `${formatClockTime(profile?.startTimeHint)} → ${Number.isFinite(end) ? formatClockTime(end) : "—"} · ${Number.isFinite(duration) ? duration.toFixed(1) : "—"}s · ${adjustment > 0 ? "+" : ""}${adjustment}s${Number.isFinite(similarity) ? ` · ${(similarity * 100).toFixed(1)}%` : ""}`;
+    meta.textContent = `${formatClockTime(profile?.startTimeHint)} → ${Number.isFinite(end) ? formatClockTime(end) : "—"} · ${Number.isFinite(duration) ? duration.toFixed(1) : "—"}s · ${getBahamutText("startFrame")} ${fmtAdjustment(startAdjustment)} / ${getBahamutText("endFrame")} ${fmtAdjustment(endAdjustment)}${Number.isFinite(similarity) ? ` · ${(similarity * 100).toFixed(1)}%` : ""}`;
 
     const button = document.createElement("button");
     button.type = "button";
@@ -865,7 +871,9 @@ function sanitizeImportedProfile(profile, kind = "intro") {
   const duration = Number(profile.duration);
   const startTimeHint = Number(profile.startTimeHint);
   const endTimeHint = Number(profile.endTimeHint);
-  const adjustmentSeconds = Number(profile.adjustmentSeconds);
+  const startAdjustmentSeconds = Number(profile.startAdjustmentSeconds);
+  const endAdjustmentSeconds = Number(profile.endAdjustmentSeconds ?? profile.adjustmentSeconds);
+  const adjustmentSeconds = endAdjustmentSeconds;
   if (!Number.isFinite(duration) || duration <= 1 || duration > 15 * 60) return null;
 
   const image = (value) => typeof value === "string" && value.startsWith("data:image/") ? value : null;
@@ -895,6 +903,8 @@ function sanitizeImportedProfile(profile, kind = "intro") {
     duration: Number(duration.toFixed(3)),
     startTimeHint: Number.isFinite(startTimeHint) && startTimeHint >= 0 ? Number(startTimeHint.toFixed(3)) : 0,
     endTimeHint: Number.isFinite(endTimeHint) && endTimeHint >= 0 ? Number(endTimeHint.toFixed(3)) : undefined,
+    startAdjustmentSeconds: Number.isFinite(startAdjustmentSeconds) ? Number(startAdjustmentSeconds.toFixed(3)) : 0,
+    endAdjustmentSeconds: Number.isFinite(endAdjustmentSeconds) ? Number(endAdjustmentSeconds.toFixed(3)) : 0,
     adjustmentSeconds: Number.isFinite(adjustmentSeconds) ? Number(adjustmentSeconds.toFixed(3)) : 0,
     startFingerprint,
     endFingerprint,
@@ -976,6 +986,20 @@ function mergeLearningWorks(currentRaw, incomingRaw, kind) {
     merged[workKey] = existing;
   }
   return { merged, importedProfiles, touchedWorks };
+}
+
+async function openBahamutBackupManager(mode = "manage") {
+  const url = extensionApi.runtime.getURL(`backup.html?mode=${encodeURIComponent(mode)}`);
+  try {
+    if (extensionApi.tabs?.create) {
+      await extensionApi.tabs.create({ url });
+      window.close();
+      return;
+    }
+  } catch (error) {
+    console.warn("[Unified Popup] Could not open backup manager with tabs.create:", error);
+  }
+  window.open(url, "_blank", "noopener");
 }
 
 async function exportBahamutLearning() {

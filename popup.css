@@ -327,3 +327,6 @@ button { color: inherit; }
 }
 .profile-delete:hover { background: rgba(112, 37, 47, .25); }
 .profile-delete:disabled { opacity: .45; cursor: default; }
+
+/* v2.2.9 — persistent backup manager launcher. */
+.backup-manager-button { width: 100%; margin-top: 6px; }

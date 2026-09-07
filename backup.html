@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>動畫瘋學習資料備份管理</title>
+  <link rel="stylesheet" href="backup.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Netflix + 動畫瘋自動播放助手</div>
+        <h1 id="pageTitle">動畫瘋學習資料備份管理</h1>
+        <p id="pageSubtitle">在固定頁面完成匯入、還原、匯出與預覽，不受瀏覽器工具列 Popup 關閉影響。</p>
+      </div>
+      <div id="versionBadge" class="version">v—</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 id="localTitle">目前瀏覽器中的學習資料</h2>
+          <p id="localDesc">這裡直接讀取擴充功能的 browser.storage.local。</p>
+        </div>
+        <button id="exportButton" class="button primary" type="button">匯出目前資料</button>
+      </div>
+      <div id="localSummary" class="summary-grid"></div>
+      <div id="localLibrary" class="library"></div>
+    </section>
+
+    <section id="importPanel" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 id="importTitle">匯入／還原備份</h2>
+          <p id="importDesc">可一次選取一個或多個 JSON。選檔後會先驗證與預覽，不會立刻覆寫資料。</p>
+        </div>
+      </div>
+
+      <label id="dropZone" class="drop-zone" for="backupFiles">
+        <strong id="dropTitle">選擇備份 JSON</strong>
+        <span id="dropHint">也可以把多個 JSON 拖曳到這裡</span>
+        <input id="backupFiles" type="file" accept="application/json,.json" multiple>
+      </label>
+
+      <div id="importStatus" class="status" role="status" aria-live="polite"></div>
+
+      <section id="previewSection" class="import-preview" hidden>
+        <div class="preview-head">
+          <div>
+            <h3 id="previewTitle">匯入前預覽</h3>
+            <p id="selectedFiles"></p>
+          </div>
+          <div id="importSummary" class="summary-grid compact"></div>
+        </div>
+        <div id="importWarnings" class="warnings"></div>
+        <div id="importLibrary" class="library preview-library"></div>
+        <div class="import-actions">
+          <button id="mergeButton" class="button primary" type="button">合併到現有資料</button>
+          <button id="replaceButton" class="button danger" type="button">用備份完整還原</button>
+        </div>
+        <p id="modeHelp" class="mode-help">「合併」保留目前資料並加入備份中缺少的片段；「完整還原」會以這份備份取代目前所有動畫瘋片頭／片尾學習資料。</p>
+      </section>
+    </section>
+
+    <footer>
+      <p id="privacyText">所有匯入、預覽、合併與匯出都只在本機 Firefox 中完成，不會上傳到任何伺服器。</p>
+    </footer>
+  </main>
+  <script src="backup-core.js"></script>
+  <script src="backup.js"></script>
+</body>
+</html>

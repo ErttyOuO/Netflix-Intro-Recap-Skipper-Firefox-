@@ -4,7 +4,7 @@
   const extensionApi = globalThis.browser || globalThis.chrome;
   if (!extensionApi) return;
 
-  // v2.2.6 unified extension - multi-anchor visual learning, safer matching, profile diagnostics, and the existing 3-minute opening-seek guard.
+  // v2.2.11 unified extension - after an ending is skipped, show an in-player Next Episode button until navigation.
 
   const DEFAULT_SETTINGS = Object.freeze({
     autoAgree: true,
@@ -77,14 +77,20 @@
       autoSkippedOutro: "已自動跳過片尾",
       outroCountdownSkip: "即將跳過片尾",
       outroCountdownNext: "即將到下一集",
-      continueOutro: "繼續觀看片尾",
+      continueOutro: "移動滑鼠取消倒數・繼續看片尾",
+      nextEpisodeButton: "下一集",
+      nextEpisodeButtonTitle: "直接前往下一集",
+      startAdjustLabel: "片段入點",
       endAdjustLabel: "片段結束點",
-      endAdjustHelp: "可重複按 ±2 秒；每次都會累加並同步移動動畫瘋播放器時間軸，再確認是否切得剛好。",
+      pointAdjustHelp: "點上方的入點／結束圖片選擇要微調的位置；±2 秒可重複累加，播放器時間軸會同步移動。",
       originalEnd: "原位置",
+      previewStart: "預覽入點 {time}",
       adjustMinus2: "−2 秒",
       adjustPlus2: "+2 秒",
       previewEnd: "預覽結束點 {time}",
       adjustmentTotal: "目前調整 {offset} 秒",
+      overlayCompactIntro: "偵測到片頭候選 · 移入展開",
+      overlayCompactOutro: "偵測到片尾候選 · 移入展開",
       close: "關閉"
     },
     "zh-CN": {
@@ -147,14 +153,20 @@
       autoSkippedOutro: "已自动跳过片尾",
       outroCountdownSkip: "即将跳过片尾",
       outroCountdownNext: "即将到下一集",
-      continueOutro: "继续观看片尾",
+      continueOutro: "移动鼠标取消倒数・继续观看片尾",
+      nextEpisodeButton: "下一集",
+      nextEpisodeButtonTitle: "直接前往下一集",
+      startAdjustLabel: "片段入点",
       endAdjustLabel: "片段结束点",
-      endAdjustHelp: "可重复按 ±2 秒；每次都会累加并同步移动动画疯播放器时间轴，再确认是否切得刚好。",
+      pointAdjustHelp: "点击上方的入点／结束图片选择要微调的位置；±2 秒可重复累加，播放器时间轴会同步移动。",
       originalEnd: "原位置",
+      previewStart: "预览入点 {time}",
       adjustMinus2: "−2 秒",
       adjustPlus2: "+2 秒",
       previewEnd: "预览结束点 {time}",
       adjustmentTotal: "当前调整 {offset} 秒",
+      overlayCompactIntro: "侦测到片头候选 · 移入展开",
+      overlayCompactOutro: "侦测到片尾候选 · 移入展开",
       close: "关闭"
     },
     en: {
@@ -217,14 +229,20 @@
       autoSkippedOutro: "Ending auto-skipped",
       outroCountdownSkip: "Skipping ending soon",
       outroCountdownNext: "Next episode soon",
-      continueOutro: "Keep watching ending",
+      continueOutro: "Move mouse to cancel and keep watching",
+      nextEpisodeButton: "Next episode",
+      nextEpisodeButtonTitle: "Go directly to the next episode",
+      startAdjustLabel: "Segment start point",
       endAdjustLabel: "Segment end point",
-      endAdjustHelp: "Press ±2 sec repeatedly to accumulate the adjustment and move the Bahamut player timeline to the proposed endpoint.",
+      pointAdjustHelp: "Click the Start or End image above to choose which point to fine-tune. Repeated ±2 sec clicks accumulate and move the player timeline.",
       originalEnd: "Original",
+      previewStart: "Preview start {time}",
       adjustMinus2: "−2 sec",
       adjustPlus2: "+2 sec",
       previewEnd: "Preview endpoint {time}",
       adjustmentTotal: "Current adjustment {offset} sec",
+      overlayCompactIntro: "Opening candidate · Hover to expand",
+      overlayCompactOutro: "Ending candidate · Hover to expand",
       close: "Close"
     }
   });
@@ -250,9 +268,11 @@
   const INTRO_MAX_LEARN_SKIP_SECONDS = 3 * 60;
   const OUTRO_SCAN_LEAD_SECONDS = 6 * 60;
   const OUTRO_SCAN_FALLBACK_START_SECONDS = 18 * 60;
-  const OUTRO_NEAR_END_SECONDS = 5;
+  const OUTRO_NEAR_END_SECONDS = 10;
   const OUTRO_NEXT_COUNTDOWN_SECONDS = 4;
-  const OUTRO_SKIP_COUNTDOWN_SECONDS = 2;
+  const OUTRO_SKIP_COUNTDOWN_SECONDS = 3;
+  const OUTRO_MOUSE_CANCEL_ARM_MS = 300;
+  const OUTRO_MOUSE_CANCEL_MIN_DISTANCE_PX = 4;
   const SEEK_SETTLE_MS = 1500;
   const CANDIDATE_LIFETIME_MS = 5000;
   const MAX_PROFILES_PER_WORK = 3;
@@ -307,6 +327,9 @@
   let candidateCard = null;
   let candidateExpireTimer = null;
   let candidateFadeTimer = null;
+  let candidateLayoutResizeObserver = null;
+  let candidateLayoutResizeHandler = null;
+  let candidateFullscreenHandler = null;
   let activeCandidate = null;
   let toast = null;
   let toastTimer = null;
@@ -331,6 +354,10 @@
   let promptHistoryCache = null;
   let outroCountdownCard = null;
   let outroCountdownTimer = null;
+  let outroCountdownMouseMoveHandler = null;
+  let nextEpisodeButton = null;
+  let nextEpisodeResizeHandler = null;
+  let nextEpisodeFullscreenHandler = null;
 
   function language() {
     return I18N[settings.language] ? settings.language : "zh-TW";
@@ -621,7 +648,7 @@
 
   function helperUiOwnsTarget(target) {
     return Boolean(target && typeof target.closest === "function" && target.closest(
-      ".bahamut-helper-candidate, .bahamut-helper-outro-countdown, .bahamut-helper-toast"
+      ".bahamut-helper-candidate, .bahamut-helper-outro-countdown, .bahamut-helper-next-episode, .bahamut-helper-toast"
     ));
   }
 
@@ -851,9 +878,12 @@
         if (!ok || captureToken !== trainingCaptureGeneration) continue;
         const frame = captureVideoFrame(video, { withPreview: offset === 0 && !originalStart });
         if (frame) {
-          if (offset === 0 && (!candidate.startFrame?.fingerprint || !isInformativeFingerprint(candidate.startFrame.fingerprint))) {
-            candidate.startFrame = copyFrame(frame);
-            candidate.frame = copyFrame(frame);
+          if (offset === 0 && (
+            !candidate.startFrame?.fingerprint ||
+            !isInformativeFingerprint(candidate.startFrame.fingerprint) ||
+            Math.abs(Number(candidate.startFrame.mediaTime) - Number(candidate.fromTime)) > PRECISE_START_FRAME_TOLERANCE_SECONDS
+          )) {
+            setCandidateStartFrame(candidate, frame);
           }
           pushFrame(frame, offset);
         }
@@ -967,7 +997,7 @@
     return items.some((item) => {
       if (item?.kind !== candidate.kind) return false;
       if (item?.suppressKindForEpisode === true) return true;
-      return Math.abs(Number(item.fromTime) - Number(candidate.fromTime)) <= 3 &&
+      return Math.abs(Number(item.originalFromTime ?? item.fromTime) - Number(candidate.originalFromTime ?? candidate.fromTime)) <= 3 &&
         Math.abs(Number(item.originalToTime) - Number(candidate.originalToTime ?? candidate.toTime)) <= 3;
     });
   }
@@ -980,6 +1010,7 @@
     items.push({
       kind: candidate.kind,
       fromTime: Number(candidate.fromTime || 0),
+      originalFromTime: Number(candidate.originalFromTime ?? candidate.fromTime ?? 0),
       originalToTime: Number(candidate.originalToTime ?? candidate.toTime ?? 0),
       status,
       suppressKindForEpisode: Boolean(suppressKindForEpisode),
@@ -1008,6 +1039,7 @@
     trainingCaptureGeneration += 1;
     trainingCaptureBusy = false;
     removeOutroCountdown();
+    removeNextEpisodeButton();
   }
 
   function evaluateProfileMatch(frameFingerprint, profile, voteMap, now) {
@@ -1153,15 +1185,177 @@
     node.style.bottom = `${bottom}px`;
   }
 
+  function removeNextEpisodeButton() {
+    if (nextEpisodeResizeHandler) {
+      window.removeEventListener?.("resize", nextEpisodeResizeHandler);
+      nextEpisodeResizeHandler = null;
+    }
+    if (nextEpisodeFullscreenHandler) {
+      document.removeEventListener?.("fullscreenchange", nextEpisodeFullscreenHandler, true);
+      nextEpisodeFullscreenHandler = null;
+    }
+    if (nextEpisodeButton) {
+      nextEpisodeButton.remove?.();
+      nextEpisodeButton = null;
+    }
+  }
+
+  function refreshNextEpisodeButtonLayout() {
+    if (!nextEpisodeButton || !activeVideo || !activeVideo.isConnected) return;
+    const mount = getCandidateCardMountPoint();
+    if (mount && nextEpisodeButton.parentNode !== mount) mount.appendChild(nextEpisodeButton);
+    positionCardAtVideoBottomRight(nextEpisodeButton);
+  }
+
+  function isUsableNextEpisodeControl(node) {
+    if (!node || node === nextEpisodeButton || node.disabled) return false;
+    if (String(node.getAttribute?.("aria-disabled") || "").toLowerCase() === "true") return false;
+    if (node.hidden) return false;
+    const rects = node.getClientRects?.();
+    return !rects || rects.length > 0;
+  }
+
+  function findNativeNextEpisodeControl() {
+    const selectors = [
+      '[data-action="next-episode"]',
+      '[data-action="next"]',
+      '[data-next-episode]',
+      'button[aria-label*="下一集"]',
+      'a[aria-label*="下一集"]',
+      'button[title*="下一集"]',
+      'a[title*="下一集"]'
+    ];
+    for (const selector of selectors) {
+      const node = document.querySelector?.(selector);
+      if (isUsableNextEpisodeControl(node)) return node;
+    }
+
+    const exactLabels = new Set(["下一集", "下集", "下一話", "Next episode", "Next Episode"]);
+    for (const node of document.querySelectorAll?.("button, a[href]") || []) {
+      const label = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      if (exactLabels.has(label) && isUsableNextEpisodeControl(node)) return node;
+    }
+    return null;
+  }
+
+  function advanceToNextEpisode(work, reason = "button") {
+    if (!activeVideo || identifyWork().episodeKey !== work.episodeKey) return false;
+    const nativeControl = findNativeNextEpisodeControl();
+    const duration = Number(activeVideo.duration);
+    const canFallbackToEnd = Number.isFinite(duration) && duration > 0;
+    if (!nativeControl && !canFallbackToEnd) return false;
+
+    suppressLearningUntil = performance.now() + AUTO_SKIP_SUPPRESS_LEARNING_MS;
+    seekSession = null;
+    outroActionStatus = "next";
+    lastOutroAction = {
+      at: Date.now(),
+      workKey: work.key,
+      episodeKey: work.episodeKey,
+      mode: "next",
+      reason,
+      method: nativeControl ? "native-control" : "video-end-fallback"
+    };
+    removeNextEpisodeButton();
+
+    if (nativeControl) {
+      nativeControl.click?.();
+      return true;
+    }
+
+    activeVideo.currentTime = Math.max(0, duration - 0.12);
+    activeVideo.play?.().catch?.(() => {});
+    return true;
+  }
+
+  function showNextEpisodeButton(work) {
+    if (!activeVideo || identifyWork().episodeKey !== work.episodeKey) return;
+    removeNextEpisodeButton();
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bahamut-helper-next-episode";
+    button.setAttribute("aria-label", t("nextEpisodeButtonTitle"));
+    button.title = t("nextEpisodeButtonTitle");
+    button.innerHTML = `<span>${escapeHtml(t("nextEpisodeButton"))}</span><span aria-hidden="true">▶</span>`;
+    button.addEventListener("pointerdown", (event) => event.stopPropagation());
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      advanceToNextEpisode(work, "post-outro-button");
+    });
+
+    nextEpisodeButton = button;
+    getCandidateCardMountPoint().appendChild(button);
+    refreshNextEpisodeButtonLayout();
+    requestAnimationFrame(() => button.classList.add("is-visible"));
+
+    nextEpisodeResizeHandler = () => refreshNextEpisodeButtonLayout();
+    nextEpisodeFullscreenHandler = () => requestAnimationFrame(refreshNextEpisodeButtonLayout);
+    window.addEventListener?.("resize", nextEpisodeResizeHandler);
+    document.addEventListener?.("fullscreenchange", nextEpisodeFullscreenHandler, true);
+  }
+
   function removeOutroCountdown() {
     if (outroCountdownTimer !== null) {
       clearInterval(outroCountdownTimer);
       outroCountdownTimer = null;
     }
+    if (outroCountdownMouseMoveHandler) {
+      document.removeEventListener?.("mousemove", outroCountdownMouseMoveHandler, true);
+      outroCountdownMouseMoveHandler = null;
+    }
     if (outroCountdownCard) {
       outroCountdownCard.remove();
       outroCountdownCard = null;
     }
+  }
+
+  function cancelOutroCountdown(work, reason = "mouse") {
+    if (outroActionStatus !== "pending" || !outroCountdownCard) return false;
+    if (!activeVideo || identifyWork().episodeKey !== work.episodeKey) return false;
+    outroActionStatus = "cancelled";
+    lastOutroAction = {
+      at: Date.now(),
+      workKey: work.key,
+      episodeKey: work.episodeKey,
+      mode: "cancelled",
+      reason
+    };
+    removeOutroCountdown();
+    updateFrameSamplerState();
+    return true;
+  }
+
+  function armOutroCountdownMouseCancel(work) {
+    if (!document.addEventListener || !activeVideo) return;
+    const armedAt = performance.now();
+    let lastPoint = null;
+
+    outroCountdownMouseMoveHandler = (event) => {
+      if (!outroCountdownCard || outroActionStatus !== "pending" || !activeVideo) return;
+      if (identifyWork().episodeKey !== work.episodeKey) return;
+
+      const x = Number(event.clientX);
+      const y = Number(event.clientY);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      const rect = activeVideo.getBoundingClientRect?.();
+      if (!rect || !rect.width || !rect.height) return;
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+
+      const point = { x, y };
+      if (!lastPoint || performance.now() - armedAt < OUTRO_MOUSE_CANCEL_ARM_MS) {
+        lastPoint = point;
+        return;
+      }
+
+      const distance = Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y);
+      lastPoint = point;
+      if (distance < OUTRO_MOUSE_CANCEL_MIN_DISTANCE_PX) return;
+      cancelOutroCountdown(work, "mouse-move");
+    };
+
+    document.addEventListener("mousemove", outroCountdownMouseMoveHandler, true);
   }
 
   function finishOutroAction(work, target, mode, profileMatch) {
@@ -1185,6 +1379,8 @@
       profileId: profileMatch.profileId
     };
     removeOutroCountdown();
+    if (mode === "skip") showNextEpisodeButton(work);
+    else removeNextEpisodeButton();
     updateFrameSamplerState();
   }
 
@@ -1219,19 +1415,13 @@
         <strong>${escapeHtml(nearEnd ? t("outroCountdownNext") : t("outroCountdownSkip"))}</strong>
         <span data-countdown>${secondsLeft}</span>
       </div>
-      <button type="button" data-action="continue-outro">${escapeHtml(t("continueOutro"))}</button>
+      <span class="bahamut-helper-outro-hint">${escapeHtml(t("continueOutro"))}</span>
     `;
     getCardMountPoint().appendChild(card);
     outroCountdownCard = card;
     positionCardAtVideoBottomRight(card);
     requestAnimationFrame(() => card.classList.add("is-visible"));
-
-    card.querySelector('[data-action="continue-outro"]')?.addEventListener("click", () => {
-      outroActionStatus = "cancelled";
-      lastOutroAction = { at: Date.now(), workKey: work.key, episodeKey: work.episodeKey, mode: "cancelled" };
-      removeOutroCountdown();
-      updateFrameSamplerState();
-    });
+    armOutroCountdownMouseCancel(work);
 
     outroCountdownTimer = setInterval(() => {
       secondsLeft -= 1;
@@ -1475,9 +1665,13 @@
       id: `candidate-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       kind,
       work,
+      originalFromTime: fromTime,
       fromTime,
       originalToTime: toTime,
       toTime,
+      startAdjustmentSeconds: 0,
+      endAdjustmentSeconds: 0,
+      // Compatibility alias used by older backups/Popup versions: end-point adjustment.
       adjustmentSeconds: 0,
       duration,
       eventCount: session.eventCount,
@@ -1498,6 +1692,23 @@
     showCandidateCard(candidate);
   }
 
+  function setCandidateStartFrame(candidate, frame) {
+    if (!candidate || !frame?.fingerprint) return false;
+    candidate.startFrame = copyFrame(frame);
+    candidate.frame = copyFrame(frame);
+    candidate.fingerprints = [frame.fingerprint];
+    // A start-point change invalidates any anchors learned from the old start.
+    candidate.learnedAnchors = null;
+    if (activeCandidate === candidate && candidateCard) {
+      const img = candidateCard.querySelector("[data-start-preview]");
+      if (img) {
+        img.src = candidate.startFrame.previewDataUrl || "";
+        img.hidden = !candidate.startFrame.previewDataUrl;
+      }
+    }
+    return true;
+  }
+
   function setCandidateEndFrame(candidate, frame) {
     if (!candidate || !frame?.fingerprint) return false;
     candidate.endFrame = copyFrame(frame);
@@ -1511,6 +1722,13 @@
     return true;
   }
 
+  function captureCandidateStartFrameNow(candidate) {
+    if (!candidate || !activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return false;
+    if (Math.abs(Number(activeVideo.currentTime) - Number(candidate.fromTime)) > 0.5) return false;
+    const frame = captureVideoFrame(activeVideo, { withPreview: true });
+    return setCandidateStartFrame(candidate, frame);
+  }
+
   function captureCandidateEndFrameNow(candidate) {
     if (!candidate || !activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return false;
     if (Math.abs(Number(activeVideo.currentTime) - Number(candidate.toTime)) > 0.5) return false;
@@ -1518,57 +1736,131 @@
     return setCandidateEndFrame(candidate, frame);
   }
 
-  function scheduleCandidateEndFrameCapture(candidate) {
+  function scheduleCandidatePointFrameCapture(candidate, point) {
     if (!candidate || !activeVideo || typeof activeVideo.addEventListener !== "function") return;
-    const token = (Number(candidate.endCaptureToken) || 0) + 1;
-    candidate.endCaptureToken = token;
-    const target = Number(candidate.toTime);
+    const pointIsStart = point === "start";
+    const tokenKey = pointIsStart ? "startCaptureToken" : "endCaptureToken";
+    const token = (Number(candidate[tokenKey]) || 0) + 1;
+    candidate[tokenKey] = token;
+    const target = Number(pointIsStart ? candidate.fromTime : candidate.toTime);
     const tryCapture = () => {
-      if (candidate.endCaptureToken !== token || activeCandidate !== candidate) return;
+      if (candidate[tokenKey] !== token || activeCandidate !== candidate) return;
       if (!activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return;
       if (Math.abs(Number(activeVideo.currentTime) - target) > 0.5) return;
-      captureCandidateEndFrameNow(candidate);
+      if (pointIsStart) captureCandidateStartFrameNow(candidate);
+      else captureCandidateEndFrameNow(candidate);
     };
     activeVideo.addEventListener("seeked", () => setTimeout(tryCapture, 40), { once: true });
     setTimeout(tryCapture, 260);
   }
 
+  function scheduleCandidateStartFrameCapture(candidate) {
+    scheduleCandidatePointFrameCapture(candidate, "start");
+  }
+
+  function scheduleCandidateEndFrameCapture(candidate) {
+    scheduleCandidatePointFrameCapture(candidate, "end");
+  }
+
+  function minimumCandidateDuration() {
+    const configured = Number(settings.minLearnSkipSeconds);
+    return Number.isFinite(configured) ? clamp(configured, 5, 180) : DEFAULT_SETTINGS.minLearnSkipSeconds;
+  }
+
+  function maximumCandidateDuration(candidate) {
+    // The explicit 3-minute ceiling is an opening-learning invariant, not just a prompt filter.
+    // Fine tuning therefore cannot silently turn a valid opening candidate into a >3-minute segment.
+    return candidate?.kind === "intro" ? INTRO_MAX_LEARN_SKIP_SECONDS : Number.POSITIVE_INFINITY;
+  }
+
+  function candidateAdjustedFromTime(candidate, adjustmentSeconds) {
+    let from = Number(candidate.originalFromTime ?? candidate.fromTime) + Number(adjustmentSeconds || 0);
+    const minDuration = minimumCandidateDuration();
+    const maxDuration = maximumCandidateDuration(candidate);
+    const min = Number.isFinite(maxDuration) ? Math.max(0, Number(candidate.toTime) - maxDuration) : 0;
+    const max = Math.max(min, Number(candidate.toTime) - minDuration);
+    return clamp(from, min, max);
+  }
+
   function candidateAdjustedToTime(candidate, adjustmentSeconds) {
     let to = Number(candidate.originalToTime) + Number(adjustmentSeconds || 0);
-    const min = Number(candidate.fromTime) + 1;
-    const duration = Number(activeVideo?.duration);
-    const max = Number.isFinite(duration) && duration > 0 ? Math.max(min, duration - 0.12) : Number.POSITIVE_INFINITY;
+    const min = Number(candidate.fromTime) + minimumCandidateDuration();
+    const videoDuration = Number(activeVideo?.duration);
+    const playableMax = Number.isFinite(videoDuration) && videoDuration > 0 ? Math.max(min, videoDuration - 0.12) : Number.POSITIVE_INFINITY;
+    const maxDuration = maximumCandidateDuration(candidate);
+    const durationMax = Number.isFinite(maxDuration) ? Number(candidate.fromTime) + maxDuration : Number.POSITIVE_INFINITY;
+    const max = Math.max(min, Math.min(playableMax, durationMax));
     return clamp(to, min, max);
   }
 
-  function applyCandidateAdjustment(candidate, adjustmentSeconds, { preview = true } = {}) {
-    const requestedAdjustment = Number(adjustmentSeconds) || 0;
-    const to = candidateAdjustedToTime(candidate, requestedAdjustment);
-    // Store the effective offset after the endpoint has been clamped to the
-    // playable video range. This keeps UI/storage consistent near either edge.
-    const effectiveAdjustment = to - Number(candidate.originalToTime);
-    candidate.adjustmentSeconds = Number(effectiveAdjustment.toFixed(3));
-    candidate.toTime = to;
-    candidate.duration = to - Number(candidate.fromTime);
-
-    if (preview && activeVideo && identifyWork().episodeKey === candidate.work.episodeKey) {
-      suppressLearningUntil = performance.now() + 2500;
-      seekSession = null;
-      if (seekSettleTimer !== null) {
-        clearTimeout(seekSettleTimer);
-        seekSettleTimer = null;
-      }
-      // Every adjustment click previews the exact proposed endpoint on the
-      // real Bahamut player, so the native timeline follows the cumulative value.
-      activeVideo.currentTime = to;
-      scheduleCandidateEndFrameCapture(candidate);
+  function prepareCandidatePointPreview(candidate, target, point) {
+    if (!activeVideo || identifyWork().episodeKey !== candidate.work.episodeKey) return;
+    suppressLearningUntil = performance.now() + 2500;
+    seekSession = null;
+    if (seekSettleTimer !== null) {
+      clearTimeout(seekSettleTimer);
+      seekSettleTimer = null;
     }
+    activeVideo.currentTime = target;
+    if (point === "start") scheduleCandidateStartFrameCapture(candidate);
+    else scheduleCandidateEndFrameCapture(candidate);
+  }
+
+  function applyCandidateStartAdjustment(candidate, adjustmentSeconds, { preview = true } = {}) {
+    const requestedAdjustment = Number(adjustmentSeconds) || 0;
+    const from = candidateAdjustedFromTime(candidate, requestedAdjustment);
+    const originalFrom = Number(candidate.originalFromTime ?? candidate.fromTime);
+    const effectiveAdjustment = from - originalFrom;
+    candidate.startAdjustmentSeconds = Number(effectiveAdjustment.toFixed(3));
+    candidate.fromTime = from;
+    candidate.duration = Number(candidate.toTime) - from;
+    candidate.learnedAnchors = null;
+
+    if (preview) prepareCandidatePointPreview(candidate, from, "start");
     return candidate;
   }
 
+  function applyCandidateEndAdjustment(candidate, adjustmentSeconds, { preview = true } = {}) {
+    const requestedAdjustment = Number(adjustmentSeconds) || 0;
+    const to = candidateAdjustedToTime(candidate, requestedAdjustment);
+    const effectiveAdjustment = to - Number(candidate.originalToTime);
+    candidate.endAdjustmentSeconds = Number(effectiveAdjustment.toFixed(3));
+    // Compatibility alias for older Popup/backup code.
+    candidate.adjustmentSeconds = candidate.endAdjustmentSeconds;
+    candidate.toTime = to;
+    candidate.duration = to - Number(candidate.fromTime);
+
+    if (preview) prepareCandidatePointPreview(candidate, to, "end");
+    return candidate;
+  }
+
+  function applyCandidatePointAdjustment(candidate, point, adjustmentSeconds, options = {}) {
+    return point === "start"
+      ? applyCandidateStartAdjustment(candidate, adjustmentSeconds, options)
+      : applyCandidateEndAdjustment(candidate, adjustmentSeconds, options);
+  }
+
+  // Backward-compatible endpoint helpers kept for older regression tests and internal callers.
+  function applyCandidateAdjustment(candidate, adjustmentSeconds, options = {}) {
+    return applyCandidateEndAdjustment(candidate, adjustmentSeconds, options);
+  }
+
+  function adjustCandidatePointBy(candidate, point, deltaSeconds, options = {}) {
+    const current = point === "start"
+      ? Number(candidate.startAdjustmentSeconds) || 0
+      : Number(candidate.endAdjustmentSeconds ?? candidate.adjustmentSeconds) || 0;
+    return applyCandidatePointAdjustment(candidate, point, current + (Number(deltaSeconds) || 0), options);
+  }
+
   function adjustCandidateBy(candidate, deltaSeconds, options = {}) {
-    const current = Number(candidate.adjustmentSeconds) || 0;
-    return applyCandidateAdjustment(candidate, current + (Number(deltaSeconds) || 0), options);
+    return adjustCandidatePointBy(candidate, "end", deltaSeconds, options);
+  }
+
+  function previewCandidatePoint(candidate, point) {
+    if (!candidate) return;
+    const target = Number(point === "start" ? candidate.fromTime : candidate.toTime);
+    if (!Number.isFinite(target)) return;
+    prepareCandidatePointPreview(candidate, target, point === "start" ? "start" : "end");
   }
 
   function formatAdjustmentOffset(seconds) {
@@ -1615,7 +1907,10 @@
       duration: Number(candidate.duration.toFixed(3)),
       startTimeHint: Number(candidate.fromTime.toFixed(3)),
       endTimeHint: Number(candidate.toTime.toFixed(3)),
-      adjustmentSeconds: Number(candidate.adjustmentSeconds || 0),
+      startAdjustmentSeconds: Number(candidate.startAdjustmentSeconds || 0),
+      endAdjustmentSeconds: Number(candidate.endAdjustmentSeconds ?? candidate.adjustmentSeconds ?? 0),
+      // Compatibility alias retained for older backups: end-point adjustment.
+      adjustmentSeconds: Number(candidate.endAdjustmentSeconds ?? candidate.adjustmentSeconds ?? 0),
       startFingerprint,
       endFingerprint: endFrame?.fingerprint || null,
       anchors: informativeAnchors,
@@ -1676,6 +1971,18 @@
       clearTimeout(candidateFadeTimer);
       candidateFadeTimer = null;
     }
+    if (candidateLayoutResizeObserver) {
+      candidateLayoutResizeObserver.disconnect?.();
+      candidateLayoutResizeObserver = null;
+    }
+    if (candidateLayoutResizeHandler) {
+      window.removeEventListener?.("resize", candidateLayoutResizeHandler);
+      candidateLayoutResizeHandler = null;
+    }
+    if (candidateFullscreenHandler) {
+      document.removeEventListener?.("fullscreenchange", candidateFullscreenHandler, true);
+      candidateFullscreenHandler = null;
+    }
 
     if (candidateCard) {
       candidateCard.remove();
@@ -1686,6 +1993,96 @@
 
   function getCardMountPoint() {
     return document.body || document.documentElement;
+  }
+
+  function getCandidateCardMountPoint() {
+    const fullscreenElement = document.fullscreenElement;
+    if (fullscreenElement && activeVideo && (fullscreenElement === activeVideo || fullscreenElement.contains?.(activeVideo))) {
+      return fullscreenElement;
+    }
+    return getCardMountPoint();
+  }
+
+  function rectanglesOverlap(a, b) {
+    if (!a || !b) return false;
+    const width = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const height = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return width > 1 && height > 1;
+  }
+
+  function candidateCardWouldCoverVideo(card) {
+    if (!card || !activeVideo || !activeVideo.isConnected) return false;
+    const videoRect = activeVideo.getBoundingClientRect?.();
+    const cardRect = card.getBoundingClientRect?.();
+    if (!videoRect || !cardRect || !videoRect.width || !videoRect.height || !cardRect.width || !cardRect.height) return false;
+
+    const storedWidth = Number(card.dataset.fullWidth) || cardRect.width;
+    const storedHeight = Number(card.dataset.fullHeight) || cardRect.height;
+    const predictedFullRect = card.classList.contains("is-auto-compact")
+      ? {
+          right: cardRect.right,
+          bottom: cardRect.bottom,
+          left: cardRect.right - storedWidth,
+          top: cardRect.bottom - storedHeight
+        }
+      : cardRect;
+    return rectanglesOverlap(predictedFullRect, videoRect);
+  }
+
+  function setCandidateAutoCompact(card, compact) {
+    if (!card) return;
+    card.dataset.autoCompact = compact ? "true" : "false";
+    const userExpanded = card.dataset.userExpanded === "true";
+    const visuallyCompact = compact && !userExpanded;
+    card.classList.toggle("is-auto-compact", visuallyCompact);
+    card.setAttribute("aria-expanded", visuallyCompact ? "false" : "true");
+  }
+
+  function refreshCandidateLayout(card) {
+    if (!card || card !== candidateCard) return;
+    const mountPoint = getCandidateCardMountPoint();
+    if (mountPoint && card.parentNode !== mountPoint) mountPoint.appendChild(card);
+
+    // Measure the complete card once so later overlap checks do not oscillate after compaction.
+    const wasCompact = card.classList.contains("is-auto-compact");
+    if (!wasCompact) {
+      const rect = card.getBoundingClientRect?.();
+      if (rect?.width && rect?.height) {
+        card.dataset.fullWidth = String(rect.width);
+        card.dataset.fullHeight = String(rect.height);
+      }
+    }
+
+    const shouldCompact = candidateCardWouldCoverVideo(card);
+    setCandidateAutoCompact(card, shouldCompact);
+  }
+
+  function installCandidateAdaptiveLayout(card) {
+    if (!card) return;
+
+    card.addEventListener("mouseenter", () => {
+      if (card.dataset.autoCompact !== "true") return;
+      card.dataset.userExpanded = "true";
+      setCandidateAutoCompact(card, true);
+    });
+    card.addEventListener("mouseleave", () => {
+      if (card.dataset.autoCompact !== "true") return;
+      card.dataset.userExpanded = "false";
+      setCandidateAutoCompact(card, true);
+    });
+
+    candidateLayoutResizeHandler = () => requestAnimationFrame(() => refreshCandidateLayout(card));
+    window.addEventListener?.("resize", candidateLayoutResizeHandler);
+
+    candidateFullscreenHandler = () => requestAnimationFrame(() => refreshCandidateLayout(card));
+    document.addEventListener?.("fullscreenchange", candidateFullscreenHandler, true);
+
+    if (typeof ResizeObserver === "function" && activeVideo) {
+      candidateLayoutResizeObserver = new ResizeObserver(() => requestAnimationFrame(() => refreshCandidateLayout(card)));
+      candidateLayoutResizeObserver.observe(activeVideo);
+    }
+
+    requestAnimationFrame(() => refreshCandidateLayout(card));
   }
 
   async function skipCurrentCandidateEpisode() {
@@ -1720,22 +2117,40 @@
     const isSimilar = existingCount > 0 && Number(candidate.bestExistingSimilarity) >= AUTO_MATCH_SOFT_THRESHOLD;
     const canAdd = existingCount < MAX_PROFILES_PER_WORK;
     const isExistingPrompt = existingCount > 0;
+    let selectedAdjustPoint = "end";
+
+    const startPreviewUrl = candidate.startFrame?.previewDataUrl || candidate.frame?.previewDataUrl || "";
+    const endPreviewUrl = candidate.endFrame?.previewDataUrl || "";
+    const preview = `
+      <div class="bahamut-helper-preview-pair" data-preview-pair>
+        <button type="button" class="bahamut-helper-preview-select" data-adjust-point="start" aria-label="${escapeHtml(t("startAdjustLabel"))}">
+          <span>${escapeHtml(t("startAdjustLabel"))}</span>
+          ${startPreviewUrl
+            ? `<img class="bahamut-helper-preview" data-start-preview src="${startPreviewUrl}" alt="${escapeHtml(t("previewAlt"))}">`
+            : `<span class="bahamut-helper-preview bahamut-helper-preview--empty" data-start-preview-empty>${escapeHtml(t("previewUnavailable"))}</span>`}
+        </button>
+        <span class="bahamut-helper-preview-arrow">→</span>
+        <button type="button" class="bahamut-helper-preview-select is-selected" data-adjust-point="end" aria-label="${escapeHtml(t("endAdjustLabel"))}">
+          <span>${escapeHtml(t("endAdjustLabel"))}</span>
+          <img class="bahamut-helper-preview" data-end-preview src="${endPreviewUrl}" alt="${escapeHtml(t("endPreviewAlt"))}" ${endPreviewUrl ? "" : "hidden"}>
+        </button>
+      </div>`;
 
     const adjustControls = `
       <div class="bahamut-helper-adjust-panel">
         <div class="bahamut-helper-adjust-head">
-          <span>${escapeHtml(t("endAdjustLabel"))}</span>
+          <span data-adjust-point-label>${escapeHtml(t("endAdjustLabel"))}</span>
           <div class="bahamut-helper-adjust-readout">
-            <strong data-preview-end>${escapeHtml(t("previewEnd", { time: formatTime(candidate.toTime) }))}</strong>
-            <em data-adjust-total>${escapeHtml(t("adjustmentTotal", { offset: formatAdjustmentOffset(candidate.adjustmentSeconds) }))}</em>
+            <strong data-preview-point>${escapeHtml(t("previewEnd", { time: formatTime(candidate.toTime) }))}</strong>
+            <em data-adjust-total>${escapeHtml(t("adjustmentTotal", { offset: formatAdjustmentOffset(candidate.endAdjustmentSeconds ?? candidate.adjustmentSeconds) }))}</em>
           </div>
         </div>
-        <div class="bahamut-helper-adjust-buttons" role="group" aria-label="${escapeHtml(t("endAdjustLabel"))}">
+        <div class="bahamut-helper-adjust-buttons" role="group">
           <button type="button" data-adjust-delta="-2">${escapeHtml(t("adjustMinus2"))}</button>
           <button type="button" data-adjust-reset="true" class="is-active">${escapeHtml(t("originalEnd"))}</button>
           <button type="button" data-adjust-delta="2">${escapeHtml(t("adjustPlus2"))}</button>
         </div>
-        <div class="bahamut-helper-adjust-help">${escapeHtml(t("endAdjustHelp"))}</div>
+        <div class="bahamut-helper-adjust-help">${escapeHtml(t("pointAdjustHelp"))}</div>
       </div>`;
 
     if (isExistingPrompt) {
@@ -1758,6 +2173,7 @@
             <button class="bahamut-helper-ghost" data-action="later" type="button">${escapeHtml(t("askLater"))}</button>
           </div>
         </div>
+        ${preview}
         <div class="bahamut-helper-time-row bahamut-helper-time-row--compact">
           <span data-from-to>${formatTime(candidate.fromTime)} → ${formatTime(candidate.toTime)}</span>
           <strong data-skip-duration>${escapeHtml(t("skipLabel", { duration: formatDuration(candidate.duration) }))}</strong>
@@ -1766,13 +2182,6 @@
         <div class="bahamut-helper-progress"><span></span></div>
       `;
     } else {
-      const startPreview = frameAvailable
-        ? `<img class="bahamut-helper-preview" src="${candidate.frame.previewDataUrl}" alt="${escapeHtml(t("previewAlt"))}">`
-        : `<div class="bahamut-helper-preview bahamut-helper-preview--empty">${escapeHtml(t("previewUnavailable"))}</div>`;
-      const endPreview = candidate.endFrame?.previewDataUrl
-        ? `<img class="bahamut-helper-preview" data-end-preview src="${candidate.endFrame.previewDataUrl}" alt="${escapeHtml(t("endPreviewAlt"))}">`
-        : `<img class="bahamut-helper-preview" data-end-preview src="" alt="${escapeHtml(t("endPreviewAlt"))}" hidden>`;
-      const preview = `<div class="bahamut-helper-preview-pair">${startPreview}<span>→</span>${endPreview}</div>`;
       const capabilityNote = frameAvailable
         ? (isInformativeFingerprint(candidate.frame.fingerprint) ? t("capabilityOk") : t("capabilityUninformative"))
         : candidate.frameCapability.status === "blocked" ? t("capabilityBlocked") : t("capabilityMissing");
@@ -1806,8 +2215,15 @@
       `;
     }
 
-    getCardMountPoint().appendChild(card);
+    card.insertAdjacentHTML("afterbegin", `
+      <div class="bahamut-helper-mini-row" aria-hidden="true">
+        <span>${escapeHtml(t(isOutro ? "overlayCompactOutro" : "overlayCompactIntro"))}</span>
+        <strong>${formatTime(candidate.fromTime)} → ${formatTime(candidate.toTime)}</strong>
+      </div>`);
+
+    getCandidateCardMountPoint().appendChild(card);
     candidateCard = card;
+    installCandidateAdaptiveLayout(card);
 
     const restartExpiry = () => {
       if (candidateExpireTimer !== null) clearTimeout(candidateExpireTimer);
@@ -1818,32 +2234,58 @@
       }, CANDIDATE_LIFETIME_MS);
     };
 
+    const adjustmentForPoint = (point) => point === "start"
+      ? Number(candidate.startAdjustmentSeconds) || 0
+      : Number(candidate.endAdjustmentSeconds ?? candidate.adjustmentSeconds) || 0;
+
     const updateAdjustmentUi = () => {
       const fromTo = card.querySelector("[data-from-to]");
       const durationNode = card.querySelector("[data-skip-duration]");
-      const endNode = card.querySelector("[data-preview-end]");
+      const pointLabel = card.querySelector("[data-adjust-point-label]");
+      const pointNode = card.querySelector("[data-preview-point]");
       const totalNode = card.querySelector("[data-adjust-total]");
+      const currentTime = selectedAdjustPoint === "start" ? candidate.fromTime : candidate.toTime;
+      const currentAdjustment = adjustmentForPoint(selectedAdjustPoint);
       if (fromTo) fromTo.textContent = `${formatTime(candidate.fromTime)} → ${formatTime(candidate.toTime)}`;
+      const miniTime = card.querySelector(".bahamut-helper-mini-row strong");
+      if (miniTime) miniTime.textContent = `${formatTime(candidate.fromTime)} → ${formatTime(candidate.toTime)}`;
       if (durationNode) durationNode.textContent = t("skipLabel", { duration: formatDuration(candidate.duration) });
-      if (endNode) endNode.textContent = t("previewEnd", { time: formatTime(candidate.toTime) });
-      if (totalNode) totalNode.textContent = t("adjustmentTotal", { offset: formatAdjustmentOffset(candidate.adjustmentSeconds) });
+      if (pointLabel) pointLabel.textContent = t(selectedAdjustPoint === "start" ? "startAdjustLabel" : "endAdjustLabel");
+      if (pointNode) pointNode.textContent = t(selectedAdjustPoint === "start" ? "previewStart" : "previewEnd", { time: formatTime(currentTime) });
+      if (totalNode) totalNode.textContent = t("adjustmentTotal", { offset: formatAdjustmentOffset(currentAdjustment) });
       const resetButton = card.querySelector("[data-adjust-reset]");
-      if (resetButton) resetButton.classList.toggle("is-active", Math.abs(Number(candidate.adjustmentSeconds) || 0) < 0.0005);
+      if (resetButton) resetButton.classList.toggle("is-active", Math.abs(currentAdjustment) < 0.0005);
+      for (const pointButton of card.querySelectorAll("[data-adjust-point]")) {
+        const selected = pointButton.dataset.adjustPoint === selectedAdjustPoint;
+        pointButton.classList.toggle("is-selected", selected);
+        pointButton.setAttribute("aria-pressed", selected ? "true" : "false");
+      }
     };
+
+    for (const pointButton of card.querySelectorAll("[data-adjust-point]")) {
+      pointButton.addEventListener("click", () => {
+        selectedAdjustPoint = pointButton.dataset.adjustPoint === "start" ? "start" : "end";
+        previewCandidatePoint(candidate, selectedAdjustPoint);
+        updateAdjustmentUi();
+        restartExpiry();
+      });
+    }
 
     for (const button of card.querySelectorAll("[data-adjust-delta]")) {
       button.addEventListener("click", () => {
-        adjustCandidateBy(candidate, Number(button.dataset.adjustDelta), { preview: true });
+        adjustCandidatePointBy(candidate, selectedAdjustPoint, Number(button.dataset.adjustDelta), { preview: true });
         updateAdjustmentUi();
         restartExpiry();
       });
     }
 
     card.querySelector("[data-adjust-reset]")?.addEventListener("click", () => {
-      applyCandidateAdjustment(candidate, 0, { preview: true });
+      applyCandidatePointAdjustment(candidate, selectedAdjustPoint, 0, { preview: true });
       updateAdjustmentUi();
       restartExpiry();
     });
+
+    updateAdjustmentUi();
 
     const closeCandidateForLater = () => {
       if (candidateExpireTimer !== null) {
@@ -1866,7 +2308,7 @@
         candidateExpireTimer = null;
       }
 
-      const actionButtons = [...card.querySelectorAll("[data-action], [data-adjust-delta], [data-adjust-reset]")];
+      const actionButtons = [...card.querySelectorAll("[data-action], [data-adjust-point], [data-adjust-delta], [data-adjust-reset]")];
       actionButtons.forEach((node) => { node.disabled = true; });
       const originalText = button.textContent;
       button.textContent = t("saving");
@@ -1988,6 +2430,7 @@
     activeVideo.removeEventListener("pause", handlePause);
     stopFrameSampler();
     removeOutroCountdown();
+    removeNextEpisodeButton();
     activeVideo = null;
     lastStableTime = null;
     lastFrame = null;
@@ -2150,7 +2593,9 @@
       startTimeHint: Number(profile?.startTimeHint) || 0,
       endTimeHint: Number(profile?.endTimeHint),
       duration: Number(profile?.duration) || 0,
-      adjustmentSeconds: Number(profile?.adjustmentSeconds) || 0,
+      startAdjustmentSeconds: Number(profile?.startAdjustmentSeconds) || 0,
+      endAdjustmentSeconds: Number(profile?.endAdjustmentSeconds ?? profile?.adjustmentSeconds) || 0,
+      adjustmentSeconds: Number(profile?.endAdjustmentSeconds ?? profile?.adjustmentSeconds) || 0,
       startPreviewDataUrl: profile?.startPreviewDataUrl || profile?.previewDataUrl || null,
       endPreviewDataUrl: profile?.endPreviewDataUrl || null,
       sourceEpisodeUrl: typeof profile?.sourceEpisodeUrl === "string" ? profile.sourceEpisodeUrl : "",

@@ -95,7 +95,7 @@
           <label class="toggle bahamut-toggle"><input id="outroLearning" type="checkbox"><span class="slider"></span></label>
         </div>
         <div class="setting-item">
-          <div class="setting-copy"><span id="autoSkipOutroTitle" class="setting-label">自動跳過已學習片尾</span><span id="autoSkipOutroDesc" class="setting-note">最後 6 分鐘辨識片尾；可取消倒數並繼續觀看</span></div>
+          <div class="setting-copy"><span id="autoSkipOutroTitle" class="setting-label">自動跳過已學習片尾</span><span id="autoSkipOutroDesc" class="setting-note">最後 6 分鐘辨識片尾；倒數時移動滑鼠即可取消並繼續觀看</span></div>
           <label class="toggle bahamut-toggle"><input id="autoSkipOutro" type="checkbox"><span class="slider"></span></label>
         </div>
       </section>
@@ -133,16 +133,16 @@
       <section class="learning-backup" aria-label="Opening learning backup">
         <div class="button-grid backup-grid">
           <button id="exportLearning" class="secondary" type="button">匯出片頭／片尾學習資料</button>
-          <button id="importLearning" class="secondary" type="button">匯入片頭／片尾學習資料</button>
+          <button id="importLearning" class="secondary" type="button">匯入／還原片頭／片尾資料</button>
         </div>
-        <input id="importLearningFile" class="visually-hidden" type="file" accept="application/json,.json">
-        <p id="learningBackupNote" class="backup-note">可將作品名稱、作品 ID、片頭／片尾影格指紋、預覽圖與跳過時間完整備份／還原。</p>
+        <button id="manageLearning" class="secondary backup-manager-button" type="button">管理全部作品與預覽圖</button>
+        <p id="learningBackupNote" class="backup-note">匯出仍可直接下載；匯入／還原會開啟固定的備份管理頁，避免工具列 Popup 在選檔時關閉而中斷。</p>
       </section>
       <button id="clearLearning" class="danger" type="button">刪除目前作品的片頭／片尾學習資料</button>
       <div id="bahamutActionStatus" class="action-status" role="status" aria-live="polite"></div>
 
       <section class="bahamut-notice">
-        <p id="noticePrimary">v2.2.6：片頭／片尾改用多影格錨點學習；舊的單影格 Profile 建議重新學習。</p>
+        <p id="noticePrimary">v2.2.11：跳過片尾後若仍有內容，播放器右下角會保留「下一集」按鈕，可隨時直接前往下一集。</p>
       </section>
 
       <footer class="language-footer">
