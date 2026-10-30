@@ -1,4 +1,4 @@
-// Unified Netflix + Bahamut popup controller - v2.2.11
+// Unified Netflix + Bahamut popup controller - v2.2.12
 
 const extensionApi = globalThis.browser || globalThis.chrome;
 if (!extensionApi) throw new Error("WebExtension API unavailable");
@@ -51,7 +51,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "測試純影片影格",
       scan: "重新掃描頁面",
       clear: "刪除目前作品的片頭／片尾學習資料",
-      noticePrimary: "v2.2.11：跳過片尾後若仍有內容，播放器右下角會保留「下一集」按鈕，可隨時直接前往下一集。",
+      noticePrimary: "v2.2.12：跳過已學習片尾後，若仍有片尾後內容，「下一集」按鈕會倒數 3 秒；移動或操作影片視窗可取消自動前往。",
       noticePrivacy: "影片影格與學習資料只儲存在本機，不會上傳到外部服務。",
       notRead: "尚未讀取",
       notDetected: "未辨識",
@@ -149,7 +149,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "测试纯影片影格",
       scan: "重新扫描页面",
       clear: "删除目前作品的片头／片尾学习资料",
-      noticePrimary: "v2.2.11：跳过片尾后如果仍有内容，播放器右下角会保留“下一集”按钮，可随时直接前往下一集。",
+      noticePrimary: "v2.2.12：跳过已学习片尾后，如果仍有片尾后内容，“下一集”按钮会倒数 3 秒；移动或操作影片视窗可取消自动前往。",
       noticePrivacy: "影片影格与学习资料只储存在本机，不会上传到外部服务。",
       notRead: "尚未读取",
       notDetected: "未辨识",
@@ -247,7 +247,7 @@ const BAHAMUT_TEXT = Object.freeze({
       testFrame: "Test pure video frame",
       scan: "Rescan page",
       clear: "Delete opening/ending data for this title",
-      noticePrimary: "v2.2.11 keeps a Next episode button in the player after an ending is skipped when post-ending content remains.",
+      noticePrimary: "v2.2.12: after a learned ending is skipped, the in-player Next episode button counts down for 3 seconds; moving or interacting in the video cancels auto-advance.",
       noticePrivacy: "Video frames and learning data stay on this device and are never uploaded to an external service.",
       notRead: "Not loaded",
       notDetected: "Not detected",

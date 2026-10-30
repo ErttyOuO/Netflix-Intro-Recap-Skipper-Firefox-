@@ -4,7 +4,7 @@
   const extensionApi = globalThis.browser || globalThis.chrome;
   if (!extensionApi) return;
 
-  // v2.2.11 unified extension - after an ending is skipped, show an in-player Next Episode button until navigation.
+  // v2.2.12: the in-player Next Episode action auto-advances after 3 seconds unless the viewer interacts with the video.
 
   const DEFAULT_SETTINGS = Object.freeze({
     autoAgree: true,
@@ -269,7 +269,7 @@
   const OUTRO_SCAN_LEAD_SECONDS = 6 * 60;
   const OUTRO_SCAN_FALLBACK_START_SECONDS = 18 * 60;
   const OUTRO_NEAR_END_SECONDS = 10;
-  const OUTRO_NEXT_COUNTDOWN_SECONDS = 4;
+  const OUTRO_NEXT_COUNTDOWN_SECONDS = 3;
   const OUTRO_SKIP_COUNTDOWN_SECONDS = 3;
   const OUTRO_MOUSE_CANCEL_ARM_MS = 300;
   const OUTRO_MOUSE_CANCEL_MIN_DISTANCE_PX = 4;
@@ -356,6 +356,8 @@
   let outroCountdownTimer = null;
   let outroCountdownMouseMoveHandler = null;
   let nextEpisodeButton = null;
+  let nextEpisodeCountdownTimer = null;
+  let nextEpisodeInteractionHandlers = null;
   let nextEpisodeResizeHandler = null;
   let nextEpisodeFullscreenHandler = null;
 
@@ -1185,7 +1187,20 @@
     node.style.bottom = `${bottom}px`;
   }
 
+  function clearNextEpisodeCountdown() {
+    if (nextEpisodeCountdownTimer !== null) {
+      clearInterval(nextEpisodeCountdownTimer);
+      nextEpisodeCountdownTimer = null;
+    }
+    if (nextEpisodeInteractionHandlers) {
+      document.removeEventListener?.("pointermove", nextEpisodeInteractionHandlers.pointerMove, true);
+      document.removeEventListener?.("pointerdown", nextEpisodeInteractionHandlers.pointerDown, true);
+      nextEpisodeInteractionHandlers = null;
+    }
+  }
+
   function removeNextEpisodeButton() {
+    clearNextEpisodeCountdown();
     if (nextEpisodeResizeHandler) {
       window.removeEventListener?.("resize", nextEpisodeResizeHandler);
       nextEpisodeResizeHandler = null;
@@ -1268,6 +1283,67 @@
     return true;
   }
 
+  function cancelNextEpisodeCountdown(work, reason = "pointer-move") {
+    if (nextEpisodeCountdownTimer === null || !nextEpisodeButton) return false;
+    if (!activeVideo || identifyWork().episodeKey !== work.episodeKey) return false;
+
+    clearNextEpisodeCountdown();
+    nextEpisodeButton.innerHTML = `<span>${escapeHtml(t("nextEpisodeButton"))}</span><span aria-hidden="true">▶</span>`;
+    nextEpisodeButton.setAttribute("aria-label", t("nextEpisodeButtonTitle"));
+    nextEpisodeButton.title = t("nextEpisodeButtonTitle");
+    if (lastOutroAction?.episodeKey === work.episodeKey) {
+      lastOutroAction = { ...lastOutroAction, nextCountdown: "cancelled", nextCountdownCancelReason: reason };
+    }
+    return true;
+  }
+
+  function startNextEpisodeCountdown(work) {
+    if (!nextEpisodeButton || !activeVideo || identifyWork().episodeKey !== work.episodeKey) return;
+
+    let secondsLeft = OUTRO_NEXT_COUNTDOWN_SECONDS;
+    const updateButton = () => {
+      if (!nextEpisodeButton) return;
+      const countdown = nextEpisodeButton.querySelector("[data-countdown]");
+      if (countdown) countdown.textContent = String(secondsLeft);
+      nextEpisodeButton.setAttribute("aria-label", `${t("nextEpisodeButtonTitle")} · ${secondsLeft}`);
+    };
+    const isInsideVideo = (event) => {
+      const x = Number(event.clientX);
+      const y = Number(event.clientY);
+      const rect = activeVideo?.getBoundingClientRect?.();
+      return Boolean(rect && rect.width && rect.height &&
+        Number.isFinite(x) && Number.isFinite(y) &&
+        x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom);
+    };
+
+    nextEpisodeButton.innerHTML = `<span>${escapeHtml(t("nextEpisodeButton"))}</span><span class="bahamut-helper-next-countdown" data-countdown aria-hidden="true">${secondsLeft}</span><span aria-hidden="true">▶</span>`;
+    updateButton();
+
+    const pointerMove = (event) => {
+      if (!nextEpisodeButton || nextEpisodeCountdownTimer === null) return;
+      if (isInsideVideo(event)) cancelNextEpisodeCountdown(work, "pointer-move");
+    };
+    const pointerDown = (event) => {
+      if (nextEpisodeCountdownTimer !== null && isInsideVideo(event)) {
+        cancelNextEpisodeCountdown(work, "pointer-down");
+      }
+    };
+
+    nextEpisodeInteractionHandlers = { pointerMove, pointerDown };
+    document.addEventListener?.("pointermove", pointerMove, true);
+    document.addEventListener?.("pointerdown", pointerDown, true);
+
+    nextEpisodeCountdownTimer = setInterval(() => {
+      secondsLeft -= 1;
+      if (secondsLeft > 0) {
+        updateButton();
+        return;
+      }
+      clearNextEpisodeCountdown();
+      advanceToNextEpisode(work, "post-outro-auto-countdown");
+    }, 1000);
+  }
+
   function showNextEpisodeButton(work) {
     if (!activeVideo || identifyWork().episodeKey !== work.episodeKey) return;
     removeNextEpisodeButton();
@@ -1294,6 +1370,7 @@
     nextEpisodeFullscreenHandler = () => requestAnimationFrame(refreshNextEpisodeButtonLayout);
     window.addEventListener?.("resize", nextEpisodeResizeHandler);
     document.addEventListener?.("fullscreenchange", nextEpisodeFullscreenHandler, true);
+    startNextEpisodeCountdown(work);
   }
 
   function removeOutroCountdown() {
@@ -1363,6 +1440,18 @@
     suppressLearningUntil = performance.now() + AUTO_SKIP_SUPPRESS_LEARNING_MS;
     seekSession = null;
     const duration = Number(activeVideo.duration);
+    if (mode === "next" && advanceToNextEpisode(work, "outro-near-end-countdown")) {
+      lastOutroAction = {
+        ...lastOutroAction,
+        targetTime: target,
+        similarity: Number(profileMatch.similarity.toFixed(4)),
+        profileId: profileMatch.profileId
+      };
+      removeOutroCountdown();
+      updateFrameSamplerState();
+      return;
+    }
+
     if (mode === "next") {
       const endTarget = Number.isFinite(duration) && duration > 0 ? Math.max(0, duration - 0.12) : target;
       activeVideo.currentTime = endTarget;

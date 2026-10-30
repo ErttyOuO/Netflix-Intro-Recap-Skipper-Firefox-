@@ -537,7 +537,7 @@
 }
 
 
-/* v2.2.11 — persistent in-player next-episode action shown after an ending was skipped. */
+/* v2.2.12 — in-player next-episode action with a cancellable 3-second countdown. */
 .bahamut-helper-next-episode {
   position: fixed;
   right: 20px;
@@ -564,6 +564,18 @@
   transition: opacity 150ms ease, transform 150ms ease, background 120ms ease, border-color 120ms ease;
 }
 .bahamut-helper-next-episode.is-visible { opacity: 1; transform: translateY(0); }
+.bahamut-helper-next-countdown {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(91, 132, 231, .24);
+  color: #c4d5ff;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
 .bahamut-helper-next-episode:hover {
   border-color: rgba(141, 174, 255, .74);
   background: rgba(30, 67, 151, .96);

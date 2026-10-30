@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.2.12
+
+### Added
+- Added a 3-second countdown to the in-player Next Episode button shown after a learned ending is skipped while post-ending content remains.
+- Moving the pointer inside the video or pressing inside the video cancels auto-advance while keeping the button available for manual use.
+
+### Changed
+- The near-end path now uses a 3-second countdown and attempts to click the site's native Next Episode control before falling back to the video-end seek.
+- Preserved the existing 10-second remaining-content threshold, saved ending targets, multi-frame matching, and learning profile format.
+
+### Safety
+- Countdown timers and interaction listeners are cleared when the button is removed, the episode changes, or the player is unbound.
+- No new permissions, network requests, or storage keys.
+
 ## 1.2.1
 
 ### Fixed
