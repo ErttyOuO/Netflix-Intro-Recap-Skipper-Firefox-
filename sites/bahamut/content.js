@@ -4,7 +4,7 @@
   const extensionApi = globalThis.browser || globalThis.chrome;
   if (!extensionApi) return;
 
-  // v2.2.12: the in-player Next Episode action auto-advances after 3 seconds unless the viewer interacts with the video.
+  // v2.2.13: the in-player Next Episode action auto-advances after 3 seconds unless the viewer interacts with the video.
 
   const DEFAULT_SETTINGS = Object.freeze({
     autoAgree: true,

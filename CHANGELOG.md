@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.13
+
+### Release
+- Corrected the extension version identifier to 2.2.13 to avoid reusing the previous release number.
+- No runtime behavior changes from v2.2.12; the 3-second Bahamut Next Episode countdown and interaction cancellation remain unchanged.
+
 ## 2.2.12
 
 ### Added

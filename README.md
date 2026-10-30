@@ -3,13 +3,19 @@
 
 # Netflix + 動畫瘋自動播放助手
 
-**Firefox WebExtension · v2.2.12**
+**Firefox WebExtension · v2.2.13**
 
 一個擴充功能，同時支援 **Netflix** 與 **巴哈姆特動畫瘋**。  
 Netflix 提供片頭／前情提要／下一集自動處理與播放器內快速設定；動畫瘋提供分級自動同意、片頭／片尾人工學習、視覺辨識自動跳過、Profile 管理與本機備份。
 
 [Firefox Add-ons](https://addons.mozilla.org/zh-TW/firefox/addon/netflix%E8%88%87%E5%8B%95%E7%95%AB%E7%98%8B%E8%87%AA%E5%8B%95%E6%92%AD%E6%94%BE/) · [GitHub Repository](https://github.com/ErttyOuO/Netflix-Intro-Recap-Skipper-Firefox-)
 </div>
+
+---
+
+## v2.2.13：版本號修正版
+
+本版修正擴充功能版本識別，避免與先前發佈版本號重複。**功能內容與 v2.2.12 相同**，包含動畫瘋片尾後下一集 3 秒倒數，以及影片視窗操作取消自動播放；沒有額外變更執行邏輯或學習資料格式。
 
 ---
 

@@ -1,6 +1,6 @@
 # Privacy Policy — Netflix + 動畫瘋自動播放助手
 
-Version: 2.2.12
+Version: 2.2.13
 
 本擴充功能以本機執行為原則，不包含 Analytics、Telemetry、廣告追蹤或遠端程式碼。
 

@@ -537,7 +537,7 @@
 }
 
 
-/* v2.2.12 — in-player next-episode action with a cancellable 3-second countdown. */
+/* v2.2.13 — in-player next-episode action with a cancellable 3-second countdown. */
 .bahamut-helper-next-episode {
   position: fixed;
   right: 20px;
